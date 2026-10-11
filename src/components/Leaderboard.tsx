@@ -102,7 +102,7 @@ export function Leaderboard({
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <p className="text-xs text-slate-500">You can adjust finishing positions per race</p>
+          <p className="text-xs text-slate-500">You can adjust finishing positions per race.</p>
           <button
             aria-pressed={isFullscreen}
             className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300"

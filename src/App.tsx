@@ -81,7 +81,7 @@ export function App() {
           </label>
         </div>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
-          Drivers' points at every race and sprint, ranked by full-season total.
+          Simulate the F1 leaderboard with race-specific adjustments to finishing positions.
         </p>
       </header>
 
