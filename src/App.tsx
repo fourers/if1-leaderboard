@@ -389,40 +389,61 @@ export function App() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.06]">
-              {rankedDrivers.map((driver, index) => (
-                <tr key={driver} className="transition-colors hover:bg-white/[0.025]">
-                  <th
-                    className="sticky left-0 z-10 border-r border-white/10 bg-[#111318] px-5 py-4 text-left sm:px-7"
-                    scope="row"
-                  >
-                    <span className="mr-2 text-xs font-semibold tabular-nums text-slate-500">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-                    <span className="font-bold tracking-wide text-slate-200">{driver}</span>
-                  </th>
-                  {eventPoints.flatMap(({ event }) => [
-                    ...(event.Sprint?.length
-                      ? [
-                          <ResultCell
-                            key={`${event.RoundNumber}-sprint-${driver}`}
-                            result={getCurrentResult(event.RoundNumber, "Sprint", driver)}
-                            className=""
-                          />,
-                        ]
-                      : []),
-                    <ResultCell
-                      key={`${event.RoundNumber}-race-${driver}`}
-                      result={getCurrentResult(event.RoundNumber, "Race", driver)}
-                      className="border-r border-white/10"
-                    />,
-                  ])}
-                  <td
-                    className="sticky right-0 z-10 border-l border-white/10 bg-[#111318] px-4 py-4 text-center font-bold tabular-nums text-green-200"
-                  >
-                    {totalPoints.get(driver) ?? 0}
-                  </td>
-                </tr>
-              ))}
+              {rankedDrivers.map((driver, index) => {
+                const originalTotal = eventPoints.reduce((total, { raceResults, sprintResults }) => {
+                  return (
+                    total +
+                    (raceResults.get(driver)?.points ?? 0) +
+                    (sprintResults.get(driver)?.points ?? 0)
+                  );
+                }, 0);
+                const pointsAdjustment = (totalPoints.get(driver) ?? 0) - originalTotal;
+
+                return (
+                  <tr key={driver} className="transition-colors hover:bg-white/[0.025]">
+                    <th
+                      className="sticky left-0 z-10 border-r border-white/10 bg-[#111318] px-5 py-4 text-left sm:px-7"
+                      scope="row"
+                    >
+                      <span className="mr-2 text-xs font-semibold tabular-nums text-slate-500">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <span className="font-bold tracking-wide text-slate-200">{driver}</span>
+                    </th>
+                    {eventPoints.flatMap(({ event }) => [
+                      ...(event.Sprint?.length
+                        ? [
+                            <ResultCell
+                              key={`${event.RoundNumber}-sprint-${driver}`}
+                              result={getCurrentResult(event.RoundNumber, "Sprint", driver)}
+                              className=""
+                            />,
+                          ]
+                        : []),
+                      <ResultCell
+                        key={`${event.RoundNumber}-race-${driver}`}
+                        result={getCurrentResult(event.RoundNumber, "Race", driver)}
+                        className="border-r border-white/10"
+                      />,
+                    ])}
+                    <td
+                      aria-label={`Season total ${totalPoints.get(driver) ?? 0} points${
+                        pointsAdjustment === 0
+                          ? ""
+                          : `, ${pointsAdjustment > 0 ? "increased" : "decreased"} by ${Math.abs(pointsAdjustment)}`
+                      }`}
+                      className="sticky right-0 z-10 border-l border-white/10 bg-[#111318] px-4 py-4 text-center font-bold tabular-nums text-green-200"
+                    >
+                      {totalPoints.get(driver) ?? 0}
+                      {pointsAdjustment !== 0 && (
+                        <sup className="ml-0.5 text-[9px] font-medium">
+                          <span className="text-white">{originalTotal}{pointsAdjustment > 0 ? `+${pointsAdjustment}` : pointsAdjustment}</span>
+                        </sup>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
