@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { EventSeasonData, ScoredResult } from "../season";
 import type { SessionName } from "../store";
 
@@ -64,10 +65,32 @@ export function Leaderboard({
   onResetAll,
   hasChanges,
 }: LeaderboardProps) {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    if (!isFullscreen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsFullscreen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isFullscreen]);
+
   return (
     <section
       aria-label="2025 full season drivers' championship"
-      className="overflow-hidden rounded-2xl border border-white/10 bg-[#111318] shadow-2xl shadow-black/20"
+      className={
+        isFullscreen
+          ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-hidden bg-[#111318]"
+          : "overflow-hidden rounded-2xl border border-white/10 bg-[#111318] shadow-2xl shadow-black/20"
+      }
     >
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-white/10 px-5 py-5 sm:px-7">
         <div>
@@ -79,6 +102,14 @@ export function Leaderboard({
         <div className="flex items-center gap-4">
           <p className="text-xs text-slate-500">Scroll horizontally to see all rounds</p>
           <button
+            aria-pressed={isFullscreen}
+            className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300"
+            onClick={() => setIsFullscreen((fullscreen) => !fullscreen)}
+            type="button"
+          >
+            {isFullscreen ? "Exit full screen" : "Full screen"}
+          </button>
+          <button
             className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300 disabled:cursor-not-allowed disabled:opacity-40"
             disabled={!hasChanges}
             onClick={onResetAll}
@@ -89,12 +120,12 @@ export function Leaderboard({
         </div>
       </div>
 
-      <div className="overflow-auto">
+      <div className={isFullscreen ? "min-h-0 flex-1 overflow-auto" : "overflow-auto"}>
         <table className="w-full border-collapse text-left">
           <caption className="sr-only">
             2025 Formula 1 championship points per race and sprint for each driver
           </caption>
-          <thead className="bg-[#171a21] text-xs uppercase tracking-[0.12em] text-slate-400">
+          <thead className="sticky top-0 z-20 bg-[#171a21] text-xs uppercase tracking-[0.12em] text-slate-400">
             <tr>
               <th
                 className="sticky left-0 z-30 min-w-20 border-b border-r border-white/10 bg-[#171a21] px-5 py-4 font-semibold sm:px-7"
