@@ -1,4 +1,4 @@
-# IF1 App
+# IF1 Leaderboard
 
 Simulate the F1 leaderboard with race-specific adjustments to finishing positions.
 
