@@ -4,7 +4,7 @@ Simulate the F1 leaderboard with race-specific adjustments to finishing position
 
 ## React app
 
-The React app uses Bun. Install the JavaScript dependencies once:
+The React app uses [Bun](https://bun.com/docs). Install the JavaScript dependencies once:
 
 ```bash
 bun install
