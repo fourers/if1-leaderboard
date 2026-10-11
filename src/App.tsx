@@ -7,6 +7,10 @@ type ScoringSystem = {
   points_allocation: Record<string, number>;
 };
 type SessionName = "Race" | "Sprint";
+type SimulatedOrder = {
+  drivers: string[];
+  classifiedCount: number;
+};
 
 const pointsSystem: Record<"grand_prix" | "sprint_race", ScoringSystem> = {
   grand_prix: {
@@ -45,6 +49,15 @@ function pointsForPosition(position: number, scoring: ScoringSystem) {
   }
 
   return scoring.points_allocation[String(position)] ?? 0;
+}
+
+function swapDrivers(drivers: string[], firstIndex: number, secondIndex: number) {
+  const firstDriver = drivers[firstIndex];
+  const secondDriver = drivers[secondIndex];
+  if (firstDriver === undefined || secondDriver === undefined) return;
+
+  drivers[firstIndex] = secondDriver;
+  drivers[secondIndex] = firstDriver;
 }
 
 const drivers = Array.from(
@@ -153,11 +166,65 @@ export function App() {
     round: number;
     session: SessionName;
   } | null>(null);
+  const [simulatedOrders, setSimulatedOrders] = useState<Record<string, SimulatedOrder>>({});
   const raceDialogRef = useRef<HTMLDialogElement>(null);
   const selectedEvent = eventData.find(
     (event) => event.RoundNumber === selectedSession?.round,
   );
   const sessionResults = selectedEvent?.[selectedSession?.session ?? "Race"] ?? [];
+  const simulationKey = selectedSession
+    ? `${selectedSession.round}-${selectedSession.session}`
+    : "";
+  const originalOrder = [...sessionResults].sort(
+    (first, second) => first.Position - second.Position,
+  );
+  const defaultSimulation: SimulatedOrder = {
+    drivers: originalOrder.map((result) => result.Abbreviation),
+    classifiedCount: originalOrder.filter((result) => result.Status !== "Retired").length,
+  };
+  const simulation = simulatedOrders[simulationKey] ?? defaultSimulation;
+  const resultsByDriver = new Map(
+    sessionResults.map((result) => [result.Abbreviation, result]),
+  );
+  const hasSimulationChanges = simulatedOrders[simulationKey] !== undefined;
+
+  const adjustPosition = (driver: string, direction: "up" | "down") => {
+    if (!selectedSession) return;
+
+    setSimulatedOrders((current) => {
+      const activeSimulation = current[simulationKey] ?? defaultSimulation;
+      const drivers = [...activeSimulation.drivers];
+      const index = drivers.indexOf(driver);
+      if (index < 0) return current;
+
+      let classifiedCount = activeSimulation.classifiedCount;
+      if (direction === "up") {
+        if (index === classifiedCount && index < drivers.length) {
+          classifiedCount += 1;
+        } else if (index > 0) {
+          swapDrivers(drivers, index - 1, index);
+        }
+      } else if (index === classifiedCount - 1) {
+        classifiedCount -= 1;
+      } else if (index >= classifiedCount && index < drivers.length - 1) {
+        swapDrivers(drivers, index, index + 1);
+      } else if (index < classifiedCount - 1) {
+        swapDrivers(drivers, index, index + 1);
+      }
+
+      return {
+        ...current,
+        [simulationKey]: { drivers, classifiedCount },
+      };
+    });
+  };
+
+  const resetPositions = () => {
+    setSimulatedOrders((current) => {
+      const { [simulationKey]: _, ...remaining } = current;
+      return remaining;
+    });
+  };
 
   useEffect(() => {
     const dialog = raceDialogRef.current;
@@ -324,7 +391,7 @@ export function App() {
       <dialog
         ref={raceDialogRef}
         aria-labelledby="race-results-title"
-        className="m-auto max-h-[min(85vh,48rem)] w-[min(42rem,calc(100%-2rem))] overflow-hidden rounded-2xl border border-white/10 bg-[#111318] p-0 text-slate-200 shadow-2xl backdrop:bg-black/70"
+        className="m-auto max-h-[min(85vh,48rem)] w-[min(64rem,calc(100%-2rem))] overflow-hidden rounded-2xl border border-white/10 bg-[#111318] p-0 text-slate-200 shadow-2xl backdrop:bg-black/70"
         onClick={(clickEvent) => {
           if (clickEvent.target === clickEvent.currentTarget) {
             setSelectedSession(null);
@@ -343,14 +410,24 @@ export function App() {
                   {selectedEvent.EventName}
                 </h2>
               </div>
-              <button
-                aria-label="Close race results"
-                className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300"
-                onClick={() => setSelectedSession(null)}
-                type="button"
-              >
-                Close
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300 disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={!hasSimulationChanges}
+                  onClick={resetPositions}
+                  type="button"
+                >
+                  Reset
+                </button>
+                <button
+                  aria-label="Close race results"
+                  className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300"
+                  onClick={() => setSelectedSession(null)}
+                  type="button"
+                >
+                  Close
+                </button>
+              </div>
             </header>
 
             <div className="max-h-[calc(min(85vh,48rem)-6rem)] overflow-auto">
@@ -361,32 +438,45 @@ export function App() {
                 <thead className="sticky top-0 bg-[#171a21] text-xs uppercase tracking-[0.12em] text-slate-400">
                   <tr>
                     <th className="px-5 py-3 font-semibold sm:px-7" scope="col">Pos</th>
+                    <th className="px-4 py-3 font-semibold" scope="col">Original</th>
                     <th className="px-4 py-3 font-semibold" scope="col">Driver</th>
                     <th className="px-4 py-3 font-semibold" scope="col">Team</th>
-                    <th className="px-5 py-3 text-right font-semibold sm:px-7" scope="col">
+                    <th className="px-4 py-3 text-right font-semibold" scope="col">
                       Grid
+                    </th>
+                    <th className="px-5 py-3 text-right font-semibold sm:px-7" scope="col">
+                      Points
+                    </th>
+                    <th className="px-4 py-3 text-center font-semibold" scope="col">
+                      Adjust
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.06]">
-                  {[...sessionResults]
-                    .sort((first, second) => first.Position - second.Position)
-                    .map((result) => (
+                  {simulation.drivers.map((driver, index) => {
+                    const result = resultsByDriver.get(driver);
+                    if (!result) return null;
+                    const isRetired = index >= simulation.classifiedCount;
+                    const currentPosition = isRetired ? null : index + 1;
+                    const positionColor = isRetired
+                      ? "text-red-300"
+                      : currentPosition === 1
+                        ? "text-amber-300"
+                        : currentPosition === 2
+                          ? "text-sky-300"
+                          : currentPosition === 3
+                            ? "text-amber-600"
+                            : "text-slate-200";
+
+                    return (
                       <tr key={result.Abbreviation}>
                         <td
-                          className={`px-5 py-3 font-bold tabular-nums sm:px-7 ${
-                            result.Status === "Retired"
-                              ? "text-red-300"
-                              : result.Position === 1
-                                ? "text-amber-300"
-                                : result.Position === 2
-                                  ? "text-sky-300"
-                                  : result.Position === 3
-                                    ? "text-amber-600"
-                                    : "text-slate-200"
-                          }`}
+                          className={`px-5 py-3 font-bold tabular-nums sm:px-7 ${positionColor}`}
                         >
-                          {result.Status === "Retired" ? "RET" : result.Position}
+                          {isRetired ? "RET" : currentPosition}
+                        </td>
+                        <td className="px-4 py-3 tabular-nums text-slate-500">
+                          {result.Position}
                         </td>
                         <td className="px-4 py-3 font-semibold text-white">
                           {result.Abbreviation}
@@ -397,8 +487,39 @@ export function App() {
                         <td className="px-5 py-3 text-right tabular-nums text-slate-300 sm:px-7">
                           {result.GridPosition ?? "—"}
                         </td>
+                        <td className="px-5 py-3 text-right font-semibold tabular-nums text-white sm:px-7">
+                          {pointsForPosition(
+                            currentPosition ?? 0,
+                            selectedSession?.session === "Sprint"
+                              ? pointsSystem.sprint_race
+                              : pointsSystem.grand_prix,
+                          )}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-2">
+                          <div className="flex items-center justify-center gap-2">
+                              <button
+                                aria-label={`Move ${result.Abbreviation} up`}
+                                className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/15 bg-[#222630] text-lg font-bold text-slate-200 shadow-[0_2px_0_#08090c] transition hover:border-white/25 hover:bg-[#303541] hover:text-white active:translate-y-0.5 active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300 disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none"
+                                disabled={index === 0}
+                                onClick={() => adjustPosition(driver, "up")}
+                                type="button"
+                              >
+                                ↑
+                              </button>
+                              <button
+                                aria-label={`Move ${result.Abbreviation} down`}
+                                className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/15 bg-[#222630] text-lg font-bold text-slate-200 shadow-[0_2px_0_#08090c] transition hover:border-white/25 hover:bg-[#303541] hover:text-white active:translate-y-0.5 active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300 disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none"
+                                disabled={isRetired && index === simulation.drivers.length - 1}
+                                onClick={() => adjustPosition(driver, "down")}
+                                type="button"
+                              >
+                                ↓
+                              </button>
+                          </div>
+                        </td>
                       </tr>
-                    ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
