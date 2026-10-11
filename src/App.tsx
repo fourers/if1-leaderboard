@@ -447,6 +447,9 @@ export function App() {
                     <th className="px-5 py-3 text-right font-semibold sm:px-7" scope="col">
                       Points
                     </th>
+                    <th className="px-4 py-3 text-right font-semibold" scope="col">
+                      Δ Points
+                    </th>
                     <th className="px-4 py-3 text-center font-semibold" scope="col">
                       Adjust
                     </th>
@@ -458,6 +461,16 @@ export function App() {
                     if (!result) return null;
                     const isRetired = index >= simulation.classifiedCount;
                     const currentPosition = isRetired ? null : index + 1;
+                    const scoring =
+                      selectedSession?.session === "Sprint"
+                        ? pointsSystem.sprint_race
+                        : pointsSystem.grand_prix;
+                    const adjustedPoints = pointsForPosition(currentPosition ?? 0, scoring);
+                    const originalPoints =
+                      result.Status === "Retired"
+                        ? 0
+                        : pointsForPosition(result.Position, scoring);
+                    const pointsDifference = adjustedPoints - originalPoints;
                     const positionColor = isRetired
                       ? "text-red-300"
                       : currentPosition === 1
@@ -488,12 +501,23 @@ export function App() {
                           {result.GridPosition ?? "—"}
                         </td>
                         <td className="px-5 py-3 text-right font-semibold tabular-nums text-white sm:px-7">
-                          {pointsForPosition(
-                            currentPosition ?? 0,
-                            selectedSession?.session === "Sprint"
-                              ? pointsSystem.sprint_race
-                              : pointsSystem.grand_prix,
-                          )}
+                          {adjustedPoints}
+                        </td>
+                        <td
+                          aria-label={`${pointsDifference > 0 ? "+" : ""}${pointsDifference} points difference`}
+                          className={`px-4 py-3 text-right font-semibold tabular-nums ${
+                            pointsDifference > 0
+                              ? "text-emerald-300"
+                              : pointsDifference < 0
+                                ? "text-red-300"
+                                : "text-slate-500"
+                          }`}
+                        >
+                          {pointsDifference === 0
+                            ? "—"
+                            : pointsDifference > 0
+                              ? `+${pointsDifference}`
+                              : pointsDifference}
                         </td>
                         <td className="whitespace-nowrap px-4 py-2">
                           <div className="flex items-center justify-center gap-2">
