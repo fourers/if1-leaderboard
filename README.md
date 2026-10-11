@@ -1,27 +1,54 @@
-# bun-react-tailwind-template
+# IF1 App
 
-To install dependencies:
+Simulate the F1 leaderboard with race-specific adjustments to finishing positions.
+
+## React app
+
+The React app uses Bun. Install the JavaScript dependencies once:
 
 ```bash
 bun install
 ```
 
-To start a development server:
+Start the development server:
 
 ```bash
-bun dev
+bun run dev
 ```
 
-To run for production:
+Build the app for production:
 
 ```bash
-bun start
+bun run build
 ```
 
-To type check:
+The production files are written to `dist/`. To run the app with the production
+server, use:
 
 ```bash
-bun check
+bun run start
 ```
 
-This project was created using `bun init` in bun v1.4.3. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+Type-check the app with:
+
+```bash
+bun run typecheck
+```
+
+## Python scripts
+
+The Python project uses [uv](https://docs.astral.sh/uv/) and requires Python
+3.14 or newer. Sync the project dependencies:
+
+```bash
+uv sync
+```
+
+Run the season data generation script:
+
+```bash
+uv run python python_scripts/seasons_to_json.py | tee src/2025_2026_data.json
+```
+
+The script writes JSON for the configured seasons to standard output. FastF1
+may download event data while it runs.
