@@ -83,7 +83,10 @@ const eventPoints = eventData.map((event) => {
       result.Abbreviation,
       {
         position: result.Position,
-        points: pointsForPosition(result.Position, pointsSystem.grand_prix),
+        points:
+          result.Status === "Retired"
+            ? 0
+            : pointsForPosition(result.Position, pointsSystem.grand_prix),
         status: result.Status,
       },
     );
@@ -94,7 +97,10 @@ const eventPoints = eventData.map((event) => {
       result.Abbreviation,
       {
         position: result.Position,
-        points: pointsForPosition(result.Position, pointsSystem.sprint_race),
+        points:
+          result.Status === "Retired"
+            ? 0
+            : pointsForPosition(result.Position, pointsSystem.sprint_race),
         status: result.Status,
       },
     );
@@ -102,22 +108,6 @@ const eventPoints = eventData.map((event) => {
 
   return { event, raceResults, sprintResults };
 });
-
-const totalPoints = new Map<string, number>();
-for (const { raceResults, sprintResults } of eventPoints) {
-  for (const [abbreviation, result] of [...raceResults, ...sprintResults]) {
-    totalPoints.set(
-      abbreviation,
-      (totalPoints.get(abbreviation) ?? 0) + result.points,
-    );
-  }
-}
-
-const rankedDrivers = [...drivers].sort(
-  (first, second) =>
-    (totalPoints.get(second) ?? 0) - (totalPoints.get(first) ?? 0) ||
-    first.localeCompare(second),
-);
 
 function ResultCell({
   result,
@@ -187,6 +177,56 @@ export function App() {
     sessionResults.map((result) => [result.Abbreviation, result]),
   );
   const hasSimulationChanges = simulatedOrders[simulationKey] !== undefined;
+  const getCurrentResult = (
+    round: number,
+    session: SessionName,
+    driver: string,
+  ) => {
+    const event = eventPoints.find(({ event }) => event.RoundNumber === round);
+    const original = session === "Race"
+      ? event?.raceResults.get(driver)
+      : event?.sprintResults.get(driver);
+    if (!event || !original) return undefined;
+
+    const order = simulatedOrders[`${round}-${session}`];
+    if (!order) return original;
+
+    const index = order.drivers.indexOf(driver);
+    if (index < 0) return original;
+
+    const isRetired = index >= order.classifiedCount;
+    const scoring = session === "Sprint"
+      ? pointsSystem.sprint_race
+      : pointsSystem.grand_prix;
+    const position = isRetired ? original.position : index + 1;
+    const status = isRetired
+      ? "Retired"
+      : original.status === "Retired"
+        ? "Finished"
+        : original.status;
+
+    return {
+      ...original,
+      position,
+      status,
+      points: status === "Retired" ? 0 : pointsForPosition(position, scoring),
+    };
+  };
+
+  const totalPoints = new Map<string, number>(drivers.map((driver) => [driver, 0]));
+  for (const { event } of eventPoints) {
+    for (const driver of drivers) {
+      const racePoints = getCurrentResult(event.RoundNumber, "Race", driver)?.points ?? 0;
+      const sprintPoints = getCurrentResult(event.RoundNumber, "Sprint", driver)?.points ?? 0;
+      totalPoints.set(driver, (totalPoints.get(driver) ?? 0) + racePoints + sprintPoints);
+    }
+  }
+
+  const rankedDrivers = [...drivers].sort(
+    (first, second) =>
+      (totalPoints.get(second) ?? 0) - (totalPoints.get(first) ?? 0) ||
+      first.localeCompare(second),
+  );
 
   const adjustPosition = (driver: string, direction: "up" | "down") => {
     if (!selectedSession) return;
@@ -360,19 +400,19 @@ export function App() {
                     </span>
                     <span className="font-bold tracking-wide text-slate-200">{driver}</span>
                   </th>
-                  {eventPoints.flatMap(({ event, raceResults, sprintResults }) => [
+                  {eventPoints.flatMap(({ event }) => [
                     ...(event.Sprint?.length
                       ? [
                           <ResultCell
                             key={`${event.RoundNumber}-sprint-${driver}`}
-                            result={sprintResults.get(driver)}
+                            result={getCurrentResult(event.RoundNumber, "Sprint", driver)}
                             className=""
                           />,
                         ]
                       : []),
                     <ResultCell
                       key={`${event.RoundNumber}-race-${driver}`}
-                      result={raceResults.get(driver)}
+                      result={getCurrentResult(event.RoundNumber, "Race", driver)}
                       className="border-r border-white/10"
                     />,
                   ])}
