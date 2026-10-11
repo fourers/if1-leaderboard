@@ -14,8 +14,10 @@ type SelectedSession = {
 };
 
 type AppState = {
+  selectedYear: number;
   selectedSession: SelectedSession | null;
   simulatedOrders: Record<string, SimulatedOrder>;
+  setSelectedYear: (year: number) => void;
   setSelectedSession: (session: SelectedSession | null) => void;
   adjustPosition: (
     key: string,
@@ -39,8 +41,11 @@ function swapDrivers(drivers: string[], firstIndex: number, secondIndex: number)
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
+      selectedYear: 2025,
       selectedSession: null,
       simulatedOrders: {},
+      setSelectedYear: (selectedYear) =>
+        set({ selectedYear, selectedSession: null, simulatedOrders: {} }),
       setSelectedSession: (selectedSession) => set({ selectedSession }),
       adjustPosition: (key, defaultOrder, driver, direction) =>
         set((state) => {
@@ -80,7 +85,29 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "f1-leaderboard-state",
-      version: 1,
+      version: 3,
+      migrate: (persistedState, version) => {
+        if (version >= 3 || typeof persistedState !== "object" || persistedState === null) {
+          return persistedState as AppState;
+        }
+
+        const previousState = persistedState as Partial<
+          Pick<AppState, "selectedYear" | "selectedSession" | "simulatedOrders">
+        >;
+        const year = previousState.selectedYear ?? 2025;
+        const simulatedOrders = Object.fromEntries(
+          Object.entries(previousState.simulatedOrders ?? {}).map(([key, order]) => [
+            /^\d{4}-\d+-(Race|Sprint)$/.test(key) ? key : `${year}-${key}`,
+            order,
+          ]),
+        );
+
+        return {
+          selectedYear: year,
+          selectedSession: previousState.selectedSession ?? null,
+          simulatedOrders,
+        } as AppState;
+      },
     },
   ),
 );

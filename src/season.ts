@@ -1,12 +1,13 @@
-import eventData from "./2025.json";
+import seasonData from "./2025_2026_data.json";
 import type { SimulatedOrder, SessionName } from "./store";
 
+type SeasonRecord = (typeof seasonData)[number];
 type ScoringSystem = {
   scoring_positions: number;
   points_allocation: Record<string, number>;
 };
 
-export type RaceEvent = (typeof eventData)[number];
+export type RaceEvent = SeasonRecord["Events"][number];
 export type RaceResult = {
   Abbreviation: string;
   Position: number;
@@ -23,6 +24,11 @@ export type EventSeasonData = {
   event: RaceEvent;
   raceResults: Map<string, ScoredResult>;
   sprintResults: Map<string, ScoredResult>;
+};
+export type SeasonData = {
+  year: number;
+  events: EventSeasonData[];
+  drivers: string[];
 };
 
 const pointsSystem: Record<"grand_prix" | "sprint_race", ScoringSystem> = {
@@ -71,46 +77,54 @@ export function pointsForSession(position: number, session: SessionName) {
   );
 }
 
-export const eventPoints: EventSeasonData[] = eventData.map((event) => {
-  const raceResults = new Map<string, ScoredResult>();
-  const sprintResults = new Map<string, ScoredResult>();
+export const seasons: SeasonData[] = seasonData.map(({ Season, Events }) => {
+  const events = Events.map((event) => {
+    const raceResults = new Map<string, ScoredResult>();
+    const sprintResults = new Map<string, ScoredResult>();
 
-  for (const result of event.Race ?? []) {
-    raceResults.set(result.Abbreviation, {
-      position: result.Position,
-      points:
-        result.Status === "Retired"
-          ? 0
-          : pointsForPosition(result.Position, pointsSystem.grand_prix),
-      status: result.Status,
-    });
-  }
+    for (const result of event.Race ?? []) {
+      raceResults.set(result.Abbreviation, {
+        position: result.Position,
+        points:
+          result.Status === "Retired"
+            ? 0
+            : pointsForPosition(result.Position, pointsSystem.grand_prix),
+        status: result.Status,
+      });
+    }
 
-  for (const result of event.Sprint ?? []) {
-    sprintResults.set(result.Abbreviation, {
-      position: result.Position,
-      points:
-        result.Status === "Retired"
-          ? 0
-          : pointsForPosition(result.Position, pointsSystem.sprint_race),
-      status: result.Status,
-    });
-  }
+    for (const result of event.Sprint ?? []) {
+      sprintResults.set(result.Abbreviation, {
+        position: result.Position,
+        points:
+          result.Status === "Retired"
+            ? 0
+            : pointsForPosition(result.Position, pointsSystem.sprint_race),
+        status: result.Status,
+      });
+    }
 
-  return { event, raceResults, sprintResults };
+    return { event, raceResults, sprintResults };
+  });
+  const drivers = Array.from(
+    new Set(
+      Events.flatMap((event) =>
+        [...(event.Race ?? []), ...(event.Sprint ?? [])].map((result) => result.Abbreviation),
+      ),
+    ),
+  );
+
+  return { year: Season, events, drivers };
 });
 
-export const drivers = Array.from(
-  new Set(
-    eventData.flatMap((event) =>
-      [...(event.Race ?? []), ...(event.Sprint ?? [])].map((result) => result.Abbreviation),
-    ),
-  ),
-);
+export function getSeasonData(year: number) {
+  return seasons.find((season) => season.year === year);
+}
 
 export function getCurrentResult(
   events: EventSeasonData[],
   simulatedOrders: Record<string, SimulatedOrder>,
+  year: number,
   round: number,
   session: SessionName,
   driver: string,
@@ -122,7 +136,7 @@ export function getCurrentResult(
       : event?.sprintResults.get(driver);
   if (!event || !original) return undefined;
 
-  const order = simulatedOrders[`${round}-${session}`];
+  const order = simulatedOrders[`${year}-${round}-${session}`];
   if (!order) return original;
 
   const index = order.drivers.indexOf(driver);
@@ -147,18 +161,21 @@ export function getCurrentResult(
 export function getSeasonStandings(
   events: EventSeasonData[],
   simulatedOrders: Record<string, SimulatedOrder>,
+  seasonDrivers: string[],
+  year: number,
 ) {
-  const totals = new Map<string, number>(drivers.map((driver) => [driver, 0]));
-  const originalTotals = new Map<string, number>(drivers.map((driver) => [driver, 0]));
+  const totals = new Map<string, number>(seasonDrivers.map((driver) => [driver, 0]));
+  const originalTotals = new Map<string, number>(seasonDrivers.map((driver) => [driver, 0]));
   const racePositionCounts = new Map<string, Map<number, number>>(
-    drivers.map((driver) => [driver, new Map<number, number>()]),
+    seasonDrivers.map((driver) => [driver, new Map<number, number>()]),
   );
 
   for (const { event, raceResults, sprintResults } of events) {
-    for (const driver of drivers) {
+    for (const driver of seasonDrivers) {
       const raceResult = getCurrentResult(
         events,
         simulatedOrders,
+        year,
         event.RoundNumber,
         "Race",
         driver,
@@ -166,6 +183,7 @@ export function getSeasonStandings(
       const sprintResult = getCurrentResult(
         events,
         simulatedOrders,
+        year,
         event.RoundNumber,
         "Sprint",
         driver,
@@ -193,13 +211,13 @@ export function getSeasonStandings(
     }
   }
 
-  const rankedDrivers = [...drivers].sort(
+  const rankedDrivers = [...seasonDrivers].sort(
     (first, second) => {
       const pointsDifference =
         (totals.get(second) ?? 0) - (totals.get(first) ?? 0);
       if (pointsDifference !== 0) return pointsDifference;
 
-      for (let position = 1; position <= drivers.length; position += 1) {
+      for (let position = 1; position <= seasonDrivers.length; position += 1) {
         const countDifference =
           (racePositionCounts.get(second)?.get(position) ?? 0) -
           (racePositionCounts.get(first)?.get(position) ?? 0);

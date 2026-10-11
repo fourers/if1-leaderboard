@@ -45,6 +45,7 @@ function ResultCell({
 }
 
 type LeaderboardProps = {
+  season: number;
   events: EventSeasonData[];
   rankedDrivers: string[];
   totals: Map<string, number>;
@@ -56,6 +57,7 @@ type LeaderboardProps = {
 };
 
 export function Leaderboard({
+  season,
   events,
   rankedDrivers,
   totals,
@@ -85,7 +87,7 @@ export function Leaderboard({
 
   return (
     <section
-      aria-label="2025 full season drivers' championship"
+      aria-label={`${season} full season drivers' championship`}
       className={
         isFullscreen
           ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-hidden bg-[#111318]"
@@ -123,7 +125,7 @@ export function Leaderboard({
       <div className={isFullscreen ? "min-h-0 flex-1 overflow-auto" : "overflow-auto"}>
         <table className="w-full border-collapse text-left">
           <caption className="sr-only">
-            2025 Formula 1 championship points per race and sprint for each driver
+            {season} Formula 1 championship points per race and sprint for each driver
           </caption>
           <thead className="sticky top-0 z-20 bg-[#171a21] text-xs uppercase tracking-[0.12em] text-slate-400">
             <tr>
