@@ -54,32 +54,39 @@ const drivers = Array.from(
 );
 
 const eventPoints = eventData.map((event) => {
-  const racePoints = new Map<string, number>();
-  const sprintPoints = new Map<string, number>();
+  const raceResults = new Map<string, { position: number; points: number }>();
+  const sprintResults = new Map<string, { position: number; points: number }>();
 
   for (const result of event.Race ?? []) {
-    racePoints.set(
+    raceResults.set(
       result.Abbreviation,
-      (racePoints.get(result.Abbreviation) ?? 0) +
-        pointsForPosition(result.Position, pointsSystem.grand_prix),
+      {
+        position: result.Position,
+        points: pointsForPosition(result.Position, pointsSystem.grand_prix),
+      },
     );
   }
 
   for (const result of event.Sprint ?? []) {
-    sprintPoints.set(
+    sprintResults.set(
       result.Abbreviation,
-      (sprintPoints.get(result.Abbreviation) ?? 0) +
-        pointsForPosition(result.Position, pointsSystem.sprint_race),
+      {
+        position: result.Position,
+        points: pointsForPosition(result.Position, pointsSystem.sprint_race),
+      },
     );
   }
 
-  return { event, racePoints, sprintPoints };
+  return { event, raceResults, sprintResults };
 });
 
 const totalPoints = new Map<string, number>();
-for (const { racePoints, sprintPoints } of eventPoints) {
-  for (const [abbreviation, score] of [...racePoints, ...sprintPoints]) {
-    totalPoints.set(abbreviation, (totalPoints.get(abbreviation) ?? 0) + score);
+for (const { raceResults, sprintResults } of eventPoints) {
+  for (const [abbreviation, result] of [...raceResults, ...sprintResults]) {
+    totalPoints.set(
+      abbreviation,
+      (totalPoints.get(abbreviation) ?? 0) + result.points,
+    );
   }
 }
 
@@ -88,6 +95,36 @@ const rankedDrivers = [...drivers].sort(
     (totalPoints.get(second) ?? 0) - (totalPoints.get(first) ?? 0) ||
     first.localeCompare(second),
 );
+
+function ResultCell({
+  result,
+  className,
+}: {
+  result: { position: number; points: number } | undefined;
+  className: string;
+}) {
+  return (
+    <td
+      aria-label={
+        result ? `Position ${result.position}, ${result.points} points` : "No result"
+      }
+      className={`${className} min-w-16 px-3 py-4 text-center tabular-nums ${
+        result ? "font-semibold text-white" : "text-slate-600"
+      }`}
+    >
+      {result ? (
+        <>
+          {result.position}
+          {result.points > 0 && (
+            <sup className="ml-0.5 text-[9px] font-medium text-slate-400">{result.points}</sup>
+          )}
+        </>
+      ) : (
+        "—"
+      )}
+    </td>
+  );
+}
 
 export function App() {
   return (
@@ -188,31 +225,21 @@ export function App() {
                     </span>
                     <span className="font-bold tracking-wide text-slate-200">{driver}</span>
                   </th>
-                  {eventPoints.flatMap(({ event, racePoints, sprintPoints }) => [
+                  {eventPoints.flatMap(({ event, raceResults, sprintResults }) => [
                     ...(event.Sprint?.length
                       ? [
-                          <td
+                          <ResultCell
                             key={`${event.RoundNumber}-sprint-${driver}`}
-                            className={`min-w-16 px-3 py-4 text-center tabular-nums ${
-                              (sprintPoints.get(driver) ?? 0) > 0
-                                ? "font-semibold text-white"
-                                : "text-slate-600"
-                            }`}
-                          >
-                            {sprintPoints.get(driver) ?? 0}
-                          </td>,
+                            result={sprintResults.get(driver)}
+                            className=""
+                          />,
                         ]
                       : []),
-                    <td
+                    <ResultCell
                       key={`${event.RoundNumber}-race-${driver}`}
-                      className={`min-w-16 border-r border-white/10 px-3 py-4 text-center tabular-nums ${
-                        (racePoints.get(driver) ?? 0) > 0
-                          ? "font-semibold text-white"
-                          : "text-slate-600"
-                      }`}
-                    >
-                      {racePoints.get(driver) ?? 0}
-                    </td>,
+                      result={raceResults.get(driver)}
+                      className="border-r border-white/10"
+                    />,
                   ])}
                   <td
                     className="sticky right-0 z-10 border-l border-white/10 bg-[#111318] px-4 py-4 text-center font-bold tabular-nums text-red-200"
