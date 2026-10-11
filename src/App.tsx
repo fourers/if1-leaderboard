@@ -177,6 +177,7 @@ export function App() {
     sessionResults.map((result) => [result.Abbreviation, result]),
   );
   const hasSimulationChanges = simulatedOrders[simulationKey] !== undefined;
+  const hasAnySimulationChanges = Object.keys(simulatedOrders).length > 0;
   const getCurrentResult = (
     round: number,
     session: SessionName,
@@ -266,6 +267,8 @@ export function App() {
     });
   };
 
+  const resetAllPositions = () => setSimulatedOrders({});
+
   useEffect(() => {
     const dialog = raceDialogRef.current;
     if (!dialog) return;
@@ -302,7 +305,17 @@ export function App() {
               {eventPoints.length} rounds · {rankedDrivers.length} drivers
             </p>
           </div>
-          <p className="text-xs text-slate-500">Scroll horizontally to see all rounds</p>
+          <div className="flex items-center gap-4">
+            <p className="text-xs text-slate-500">Scroll horizontally to see all rounds</p>
+            <button
+              className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300 disabled:cursor-not-allowed disabled:opacity-40"
+              disabled={!hasAnySimulationChanges}
+              onClick={resetAllPositions}
+              type="button"
+            >
+              Reset all
+            </button>
+          </div>
         </div>
 
         <div className="overflow-auto">
