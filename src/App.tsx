@@ -126,7 +126,7 @@ export function App() {
             <thead className="bg-[#171a21] text-xs uppercase tracking-[0.12em] text-slate-400">
               <tr>
                 <th
-                  className="sticky left-0 z-30 min-w-40 border-b border-r border-white/10 bg-[#171a21] px-5 py-4 font-semibold sm:px-7"
+                  className="sticky left-0 z-30 min-w-20 border-b border-r border-white/10 bg-[#171a21] px-5 py-4 font-semibold sm:px-7"
                   rowSpan={2}
                   scope="col"
                 >
@@ -135,7 +135,7 @@ export function App() {
                 {eventPoints.map(({ event }) => (
                   <th
                     key={event.RoundNumber}
-                    className="min-w-32 border-b border-white/10 px-3 py-3 text-center font-semibold"
+                    className="min-w-32 border-b border-r border-white/10 px-3 py-3 text-center font-semibold"
                     colSpan={event.Sprint?.length ? 2 : 1}
                     scope="col"
                   >
@@ -168,7 +168,7 @@ export function App() {
                     : []),
                   <th
                     key={`${event.RoundNumber}-race-label`}
-                    className="border-b border-white/10 px-3 pb-3 pt-3 text-center text-[10px] font-medium tracking-normal text-slate-500"
+                    className="border-b border-r border-white/10 px-3 pb-3 pt-3 text-center text-[10px] font-medium tracking-normal text-slate-500"
                     scope="col"
                   >
                     Race
@@ -205,7 +205,7 @@ export function App() {
                       : []),
                     <td
                       key={`${event.RoundNumber}-race-${driver}`}
-                      className={`min-w-16 px-3 py-4 text-center tabular-nums ${
+                      className={`min-w-16 border-r border-white/10 px-3 py-4 text-center tabular-nums ${
                         (racePoints.get(driver) ?? 0) > 0
                           ? "font-semibold text-white"
                           : "text-slate-600"
