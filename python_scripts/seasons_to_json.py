@@ -3,6 +3,8 @@ import json
 
 import fastf1 as ff1
 
+SEASONS = [2025, 2026]
+
 
 def load_session(season, event_name, event_format):
     event = ff1.get_session(season, event_name, event_format)
@@ -10,13 +12,15 @@ def load_session(season, event_name, event_format):
 
     results = []
     for _, driver_row in event.results.iterrows():
-        results.append({
-            "Abbreviation": driver_row["Abbreviation"],
-            "GridPosition": driver_row["GridPosition"],
-            "Position": driver_row["Position"],
-            "Status": driver_row["Status"],
-            "TeamName": driver_row["TeamName"],
-        })
+        results.append(
+            {
+                "Abbreviation": driver_row["Abbreviation"],
+                "GridPosition": driver_row["GridPosition"],
+                "Position": driver_row["Position"],
+                "Status": driver_row["Status"],
+                "TeamName": driver_row["TeamName"],
+            }
+        )
     return results
 
 
@@ -31,7 +35,7 @@ def get_season_data(season: int):
         event_data = {
             "EventName": event_name,
             "RoundNumber": event["RoundNumber"],
-            "ShortEventName": event_name.replace("Grand Prix", "").strip()
+            "ShortEventName": event_name.replace("Grand Prix", "").strip(),
         }
         if event["EventFormat"] == "sprint_qualifying":
             event_data["Sprint"] = load_session(season, event_name, "S")
@@ -41,8 +45,9 @@ def get_season_data(season: int):
 
 
 def main():
-    seasons = [2025, 2026]
-    json_data = [{"Season": 2025, "Events": get_season_data(season)} for season in seasons]
+    json_data = [
+        {"Season": season, "Events": get_season_data(season)} for season in SEASONS
+    ]
     print(json.dumps(json_data, indent=2))
 
 

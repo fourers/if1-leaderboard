@@ -87,7 +87,7 @@ export function Leaderboard({
 
   return (
     <section
-      aria-label={`${season} full season drivers' championship`}
+      aria-label={`${season} IF1 Drivers' championship`}
       className={
         isFullscreen
           ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-hidden bg-[#111318]"
@@ -96,7 +96,7 @@ export function Leaderboard({
     >
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-white/10 px-5 py-5 sm:px-7">
         <div>
-          <h2 className="text-xl font-bold text-white">{season} season points by event</h2>
+          <h2 className="text-xl font-bold text-white">{season} IF1 Drivers' Championship</h2>
           <p className="mt-1 text-sm text-slate-500">
             {events.length} rounds · {rankedDrivers.length} drivers
           </p>

@@ -47,7 +47,7 @@ uv sync
 Run the season data generation script:
 
 ```bash
-uv run python python_scripts/seasons_to_json.py | tee src/2025_2026_data.json
+uv run python python_scripts/seasons_to_json.py | tee src/season_data.json
 ```
 
 The script writes JSON for the configured seasons to standard output. FastF1

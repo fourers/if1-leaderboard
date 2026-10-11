@@ -1,4 +1,4 @@
-import seasonData from "./2025_2026_data.json";
+import seasonData from "./season_data.json";
 import type { SimulatedOrder, SessionName } from "./store";
 
 type SeasonRecord = (typeof seasonData)[number];

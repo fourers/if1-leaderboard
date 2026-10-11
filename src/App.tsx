@@ -62,7 +62,7 @@ export function App() {
               Formula 1 · {season.year} season
             </p>
             <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl">
-              IF1 Drivers' championship
+              IF1 Leaderboard Simulator
             </h1>
           </div>
           <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-400">
