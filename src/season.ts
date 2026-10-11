@@ -150,6 +150,9 @@ export function getSeasonStandings(
 ) {
   const totals = new Map<string, number>(drivers.map((driver) => [driver, 0]));
   const originalTotals = new Map<string, number>(drivers.map((driver) => [driver, 0]));
+  const racePositionCounts = new Map<string, Map<number, number>>(
+    drivers.map((driver) => [driver, new Map<number, number>()]),
+  );
 
   for (const { event, raceResults, sprintResults } of events) {
     for (const driver of drivers) {
@@ -177,13 +180,34 @@ export function getSeasonStandings(
         driver,
         (originalTotals.get(driver) ?? 0) + originalPoints,
       );
+
+      if (raceResult && raceResult.status !== "Retired") {
+        const positions = racePositionCounts.get(driver);
+        if (positions) {
+          positions.set(
+            raceResult.position,
+            (positions.get(raceResult.position) ?? 0) + 1,
+          );
+        }
+      }
     }
   }
 
   const rankedDrivers = [...drivers].sort(
-    (first, second) =>
-      (totals.get(second) ?? 0) - (totals.get(first) ?? 0) ||
-      first.localeCompare(second),
+    (first, second) => {
+      const pointsDifference =
+        (totals.get(second) ?? 0) - (totals.get(first) ?? 0);
+      if (pointsDifference !== 0) return pointsDifference;
+
+      for (let position = 1; position <= drivers.length; position += 1) {
+        const countDifference =
+          (racePositionCounts.get(second)?.get(position) ?? 0) -
+          (racePositionCounts.get(first)?.get(position) ?? 0);
+        if (countDifference !== 0) return countDifference;
+      }
+
+      return first.localeCompare(second);
+    },
   );
 
   return { totals, originalTotals, rankedDrivers };
