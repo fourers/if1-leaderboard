@@ -1,0 +1,13 @@
+[project]
+name = "if1-app"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Fourers", email = "fourersxd@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "click>=8.5.0",
+    "fastf1>=3.8.3",
+]
