@@ -1,0 +1,86 @@
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+
+export type SessionName = "Race" | "Sprint";
+
+export type SimulatedOrder = {
+  drivers: string[];
+  classifiedCount: number;
+};
+
+type SelectedSession = {
+  round: number;
+  session: SessionName;
+};
+
+type AppState = {
+  selectedSession: SelectedSession | null;
+  simulatedOrders: Record<string, SimulatedOrder>;
+  setSelectedSession: (session: SelectedSession | null) => void;
+  adjustPosition: (
+    key: string,
+    defaultOrder: SimulatedOrder,
+    driver: string,
+    direction: "up" | "down",
+  ) => void;
+  resetSessionPositions: (key: string) => void;
+  resetAllPositions: () => void;
+};
+
+function swapDrivers(drivers: string[], firstIndex: number, secondIndex: number) {
+  const firstDriver = drivers[firstIndex];
+  const secondDriver = drivers[secondIndex];
+  if (firstDriver === undefined || secondDriver === undefined) return;
+
+  drivers[firstIndex] = secondDriver;
+  drivers[secondIndex] = firstDriver;
+}
+
+export const useAppStore = create<AppState>()(
+  persist(
+    (set) => ({
+      selectedSession: null,
+      simulatedOrders: {},
+      setSelectedSession: (selectedSession) => set({ selectedSession }),
+      adjustPosition: (key, defaultOrder, driver, direction) =>
+        set((state) => {
+          const activeSimulation = state.simulatedOrders[key] ?? defaultOrder;
+          const drivers = [...activeSimulation.drivers];
+          const index = drivers.indexOf(driver);
+          if (index < 0) return state;
+
+          let classifiedCount = activeSimulation.classifiedCount;
+          if (direction === "up") {
+            if (index === classifiedCount && index < drivers.length) {
+              classifiedCount += 1;
+            } else if (index > 0) {
+              swapDrivers(drivers, index - 1, index);
+            }
+          } else if (index === classifiedCount - 1) {
+            classifiedCount -= 1;
+          } else if (index >= classifiedCount && index < drivers.length - 1) {
+            swapDrivers(drivers, index, index + 1);
+          } else if (index < classifiedCount - 1) {
+            swapDrivers(drivers, index, index + 1);
+          }
+
+          return {
+            simulatedOrders: {
+              ...state.simulatedOrders,
+              [key]: { drivers, classifiedCount },
+            },
+          };
+        }),
+      resetSessionPositions: (key) =>
+        set((state) => {
+          const { [key]: _removed, ...simulatedOrders } = state.simulatedOrders;
+          return { simulatedOrders };
+        }),
+      resetAllPositions: () => set({ simulatedOrders: {} }),
+    }),
+    {
+      name: "f1-leaderboard-state",
+      version: 1,
+    },
+  ),
+);

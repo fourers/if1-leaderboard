@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import { useAppStore, type SessionName, type SimulatedOrder } from "./store";
 import eventData from "./2025.json";
 import "./index.css";
 
@@ -6,12 +7,6 @@ type ScoringSystem = {
   scoring_positions: number;
   points_allocation: Record<string, number>;
 };
-type SessionName = "Race" | "Sprint";
-type SimulatedOrder = {
-  drivers: string[];
-  classifiedCount: number;
-};
-
 const pointsSystem: Record<"grand_prix" | "sprint_race", ScoringSystem> = {
   grand_prix: {
     scoring_positions: 10,
@@ -49,15 +44,6 @@ function pointsForPosition(position: number, scoring: ScoringSystem) {
   }
 
   return scoring.points_allocation[String(position)] ?? 0;
-}
-
-function swapDrivers(drivers: string[], firstIndex: number, secondIndex: number) {
-  const firstDriver = drivers[firstIndex];
-  const secondDriver = drivers[secondIndex];
-  if (firstDriver === undefined || secondDriver === undefined) return;
-
-  drivers[firstIndex] = secondDriver;
-  drivers[secondIndex] = firstDriver;
 }
 
 const drivers = Array.from(
@@ -152,11 +138,12 @@ function ResultCell({
 }
 
 export function App() {
-  const [selectedSession, setSelectedSession] = useState<{
-    round: number;
-    session: SessionName;
-  } | null>(null);
-  const [simulatedOrders, setSimulatedOrders] = useState<Record<string, SimulatedOrder>>({});
+  const selectedSession = useAppStore((state) => state.selectedSession);
+  const simulatedOrders = useAppStore((state) => state.simulatedOrders);
+  const setSelectedSession = useAppStore((state) => state.setSelectedSession);
+  const updatePosition = useAppStore((state) => state.adjustPosition);
+  const resetStoredSessionPositions = useAppStore((state) => state.resetSessionPositions);
+  const resetAllPositions = useAppStore((state) => state.resetAllPositions);
   const raceDialogRef = useRef<HTMLDialogElement>(null);
   const selectedEvent = eventData.find(
     (event) => event.RoundNumber === selectedSession?.round,
@@ -231,43 +218,10 @@ export function App() {
 
   const adjustPosition = (driver: string, direction: "up" | "down") => {
     if (!selectedSession) return;
-
-    setSimulatedOrders((current) => {
-      const activeSimulation = current[simulationKey] ?? defaultSimulation;
-      const drivers = [...activeSimulation.drivers];
-      const index = drivers.indexOf(driver);
-      if (index < 0) return current;
-
-      let classifiedCount = activeSimulation.classifiedCount;
-      if (direction === "up") {
-        if (index === classifiedCount && index < drivers.length) {
-          classifiedCount += 1;
-        } else if (index > 0) {
-          swapDrivers(drivers, index - 1, index);
-        }
-      } else if (index === classifiedCount - 1) {
-        classifiedCount -= 1;
-      } else if (index >= classifiedCount && index < drivers.length - 1) {
-        swapDrivers(drivers, index, index + 1);
-      } else if (index < classifiedCount - 1) {
-        swapDrivers(drivers, index, index + 1);
-      }
-
-      return {
-        ...current,
-        [simulationKey]: { drivers, classifiedCount },
-      };
-    });
+    updatePosition(simulationKey, defaultSimulation, driver, direction);
   };
 
-  const resetPositions = () => {
-    setSimulatedOrders((current) => {
-      const { [simulationKey]: _, ...remaining } = current;
-      return remaining;
-    });
-  };
-
-  const resetAllPositions = () => setSimulatedOrders({});
+  const resetPositions = () => resetStoredSessionPositions(simulationKey);
 
   useEffect(() => {
     const dialog = raceDialogRef.current;
