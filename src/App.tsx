@@ -287,15 +287,15 @@ export function App() {
           Formula 1 · 2025 season
         </p>
         <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl">
-          Drivers’ championship
+          IF1 Drivers' championship
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
-          Drivers’ points at every race and sprint, ranked by full-season total.
+          Drivers' points at every race and sprint, ranked by full-season total.
         </p>
       </header>
 
       <section
-        aria-label="2025 full season drivers’ championship"
+        aria-label="2025 full season drivers' championship"
         className="overflow-hidden rounded-2xl border border-white/10 bg-[#111318] shadow-2xl shadow-black/20"
       >
         <div className="flex flex-wrap items-end justify-between gap-3 border-b border-white/10 px-5 py-5 sm:px-7">
