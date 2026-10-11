@@ -54,8 +54,14 @@ const drivers = Array.from(
 );
 
 const eventPoints = eventData.map((event) => {
-  const raceResults = new Map<string, { position: number; points: number }>();
-  const sprintResults = new Map<string, { position: number; points: number }>();
+  const raceResults = new Map<
+    string,
+    { position: number; points: number; status: string }
+  >();
+  const sprintResults = new Map<
+    string,
+    { position: number; points: number; status: string }
+  >();
 
   for (const result of event.Race ?? []) {
     raceResults.set(
@@ -63,6 +69,7 @@ const eventPoints = eventData.map((event) => {
       {
         position: result.Position,
         points: pointsForPosition(result.Position, pointsSystem.grand_prix),
+        status: result.Status,
       },
     );
   }
@@ -73,6 +80,7 @@ const eventPoints = eventData.map((event) => {
       {
         position: result.Position,
         points: pointsForPosition(result.Position, pointsSystem.sprint_race),
+        status: result.Status,
       },
     );
   }
@@ -100,23 +108,35 @@ function ResultCell({
   result,
   className,
 }: {
-  result: { position: number; points: number } | undefined;
+  result: { position: number; points: number; status: string } | undefined;
   className: string;
 }) {
+  const resultColor = !result
+    ? "text-slate-600"
+    : result.status === "Retired"
+      ? "text-red-300"
+      : result.position === 1
+        ? "text-amber-300"
+        : result.position === 2
+          ? "text-sky-300"
+          : result.position === 3
+            ? "text-amber-600"
+            : "text-white";
+
   return (
     <td
       aria-label={
-        result ? `Position ${result.position}, ${result.points} points` : "No result"
+        result
+          ? `Position ${result.position}, ${result.points} points, ${result.status}`
+          : "No result"
       }
-      className={`${className} min-w-16 px-3 py-4 text-center tabular-nums ${
-        result ? "font-semibold text-white" : "text-slate-600"
-      }`}
+      className={`${className} min-w-16 px-3 py-4 text-center font-semibold tabular-nums ${resultColor}`}
     >
       {result ? (
         <>
           {result.position}
           {result.points > 0 && (
-            <sup className="ml-0.5 text-[9px] font-medium text-slate-400">{result.points}</sup>
+            <sup className="ml-0.5 text-[9px] font-medium opacity-75">{result.points}</sup>
           )}
         </>
       ) : (
@@ -242,7 +262,7 @@ export function App() {
                     />,
                   ])}
                   <td
-                    className="sticky right-0 z-10 border-l border-white/10 bg-[#111318] px-4 py-4 text-center font-bold tabular-nums text-red-200"
+                    className="sticky right-0 z-10 border-l border-white/10 bg-[#111318] px-4 py-4 text-center font-bold tabular-nums text-green-200"
                   >
                     {totalPoints.get(driver) ?? 0}
                   </td>
