@@ -134,8 +134,8 @@ function ResultCell({
     >
       {result ? (
         <>
-          {result.position}
-          {result.points > 0 && (
+          {result.status === "Retired" ? "RET" : result.position}
+          {result.status !== "Retired" && result.points > 0 && (
             <sup className="ml-0.5 text-[9px] font-medium opacity-75">{result.points}</sup>
           )}
         </>
