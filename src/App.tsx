@@ -54,30 +54,31 @@ const drivers = Array.from(
 );
 
 const eventPoints = eventData.map((event) => {
-  const points = new Map<string, number>();
+  const racePoints = new Map<string, number>();
+  const sprintPoints = new Map<string, number>();
 
   for (const result of event.Race ?? []) {
-    points.set(
+    racePoints.set(
       result.Abbreviation,
-      (points.get(result.Abbreviation) ?? 0) +
+      (racePoints.get(result.Abbreviation) ?? 0) +
         pointsForPosition(result.Position, pointsSystem.grand_prix),
     );
   }
 
   for (const result of event.Sprint ?? []) {
-    points.set(
+    sprintPoints.set(
       result.Abbreviation,
-      (points.get(result.Abbreviation) ?? 0) +
+      (sprintPoints.get(result.Abbreviation) ?? 0) +
         pointsForPosition(result.Position, pointsSystem.sprint_race),
     );
   }
 
-  return { event, points };
+  return { event, racePoints, sprintPoints };
 });
 
 const totalPoints = new Map<string, number>();
-for (const { points } of eventPoints) {
-  for (const [abbreviation, score] of points) {
+for (const { racePoints, sprintPoints } of eventPoints) {
+  for (const [abbreviation, score] of [...racePoints, ...sprintPoints]) {
     totalPoints.set(abbreviation, (totalPoints.get(abbreviation) ?? 0) + score);
   }
 }
@@ -99,8 +100,7 @@ export function App() {
           Drivers’ championship
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
-          Points scored at each Grand Prix, with sprint points included where applicable.
-          Drivers are ranked by their full-season total.
+          Drivers’ points at every race and sprint, ranked by full-season total.
         </p>
       </header>
 
@@ -110,89 +110,118 @@ export function App() {
       >
         <div className="flex flex-wrap items-end justify-between gap-3 border-b border-white/10 px-5 py-5 sm:px-7">
           <div>
-            <h2 className="text-xl font-bold text-white">Season points by Grand Prix</h2>
+            <h2 className="text-xl font-bold text-white">Season points by event</h2>
             <p className="mt-1 text-sm text-slate-500">
               {eventPoints.length} rounds · {rankedDrivers.length} drivers
             </p>
           </div>
-          <p className="text-xs text-slate-500">Scroll horizontally to see all drivers</p>
+          <p className="text-xs text-slate-500">Scroll horizontally to see all rounds</p>
         </div>
 
         <div className="overflow-auto">
           <table className="w-full border-collapse text-left">
             <caption className="sr-only">
-              2025 Formula 1 championship points per Grand Prix for each driver
+              2025 Formula 1 championship points per race and sprint for each driver
             </caption>
             <thead className="bg-[#171a21] text-xs uppercase tracking-[0.12em] text-slate-400">
               <tr>
                 <th
-                  className="sticky left-0 z-20 min-w-52 border-b border-r border-white/10 bg-[#171a21] px-5 py-4 font-semibold sm:px-7"
+                  className="sticky left-0 z-30 min-w-40 border-b border-r border-white/10 bg-[#171a21] px-5 py-4 font-semibold sm:px-7"
+                  rowSpan={2}
                   scope="col"
                 >
-                  Grand Prix
+                  Driver
                 </th>
-                {rankedDrivers.map((driver, index) => (
+                {eventPoints.map(({ event }) => (
                   <th
-                    key={driver}
-                    className="min-w-24 border-b border-white/10 px-3 py-4 text-center font-semibold"
+                    key={event.RoundNumber}
+                    className="min-w-32 border-b border-white/10 px-3 py-3 text-center font-semibold"
+                    colSpan={event.Sprint?.length ? 2 : 1}
                     scope="col"
                   >
-                    <span className="block text-[10px] text-slate-500">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
+                    <span className="block text-[10px] text-slate-500">Round {event.RoundNumber}</span>
                     <span className="mt-1 block text-sm font-bold tracking-wide text-white">
-                      {driver}
+                      {event.ShortEventName}
                     </span>
                   </th>
                 ))}
+                <th
+                  className="sticky right-0 z-20 min-w-28 border-b border-l border-white/10 bg-[#171a21] px-4 py-4 text-center font-semibold"
+                  rowSpan={2}
+                  scope="col"
+                >
+                  Total
+                </th>
+              </tr>
+              <tr>
+                {eventPoints.flatMap(({ event }) => [
+                  ...(event.Sprint?.length
+                    ? [
+                        <th
+                          key={`${event.RoundNumber}-sprint-label`}
+                          className="border-b border-white/10 px-3 pb-3 pt-3 text-center text-[10px] font-medium tracking-normal text-slate-500"
+                          scope="col"
+                        >
+                          Sprint
+                        </th>,
+                      ]
+                    : []),
+                  <th
+                    key={`${event.RoundNumber}-race-label`}
+                    className="border-b border-white/10 px-3 pb-3 pt-3 text-center text-[10px] font-medium tracking-normal text-slate-500"
+                    scope="col"
+                  >
+                    Race
+                  </th>,
+                ])}
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.06]">
-              {eventPoints.map(({ event, points }) => (
-                <tr key={event.RoundNumber} className="transition-colors hover:bg-white/[0.025]">
+              {rankedDrivers.map((driver, index) => (
+                <tr key={driver} className="transition-colors hover:bg-white/[0.025]">
                   <th
                     className="sticky left-0 z-10 border-r border-white/10 bg-[#111318] px-5 py-4 text-left sm:px-7"
                     scope="row"
                   >
                     <span className="mr-2 text-xs font-semibold tabular-nums text-slate-500">
-                      {String(event.RoundNumber).padStart(2, "0")}
+                      {String(index + 1).padStart(2, "0")}
                     </span>
-                    <span className="font-medium text-slate-200">{event.ShortEventName}</span>
+                    <span className="font-bold tracking-wide text-slate-200">{driver}</span>
                   </th>
-                  {rankedDrivers.map((driver) => {
-                    const score = points.get(driver) ?? 0;
-                    return (
-                      <td
-                        key={driver}
-                        className={`px-3 py-4 text-center tabular-nums ${
-                          score > 0 ? "font-semibold text-white" : "text-slate-600"
-                        }`}
-                      >
-                        {score}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-            <tfoot className="bg-red-500/10">
-              <tr>
-                <th
-                  className="sticky bottom-0 left-0 z-20 border-r border-t border-red-400/20 bg-[#271316] px-5 py-4 text-left font-bold text-white sm:px-7"
-                  scope="row"
-                >
-                  Season total
-                </th>
-                {rankedDrivers.map((driver) => (
+                  {eventPoints.flatMap(({ event, racePoints, sprintPoints }) => [
+                    ...(event.Sprint?.length
+                      ? [
+                          <td
+                            key={`${event.RoundNumber}-sprint-${driver}`}
+                            className={`min-w-16 px-3 py-4 text-center tabular-nums ${
+                              (sprintPoints.get(driver) ?? 0) > 0
+                                ? "font-semibold text-white"
+                                : "text-slate-600"
+                            }`}
+                          >
+                            {sprintPoints.get(driver) ?? 0}
+                          </td>,
+                        ]
+                      : []),
+                    <td
+                      key={`${event.RoundNumber}-race-${driver}`}
+                      className={`min-w-16 px-3 py-4 text-center tabular-nums ${
+                        (racePoints.get(driver) ?? 0) > 0
+                          ? "font-semibold text-white"
+                          : "text-slate-600"
+                      }`}
+                    >
+                      {racePoints.get(driver) ?? 0}
+                    </td>,
+                  ])}
                   <td
-                    key={driver}
-                    className="border-t border-red-400/20 px-3 py-4 text-center font-bold tabular-nums text-red-200"
+                    className="sticky right-0 z-10 border-l border-white/10 bg-[#111318] px-4 py-4 text-center font-bold tabular-nums text-red-200"
                   >
                     {totalPoints.get(driver) ?? 0}
                   </td>
-                ))}
-              </tr>
-            </tfoot>
+                </tr>
+              ))}
+            </tbody>
           </table>
         </div>
       </section>
