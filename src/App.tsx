@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import eventData from "./2025.json";
 import "./index.css";
 
@@ -5,6 +6,7 @@ type ScoringSystem = {
   scoring_positions: number;
   points_allocation: Record<string, number>;
 };
+type SessionName = "Race" | "Sprint";
 
 const pointsSystem: Record<"grand_prix" | "sprint_race", ScoringSystem> = {
   grand_prix: {
@@ -147,6 +149,27 @@ function ResultCell({
 }
 
 export function App() {
+  const [selectedSession, setSelectedSession] = useState<{
+    round: number;
+    session: SessionName;
+  } | null>(null);
+  const raceDialogRef = useRef<HTMLDialogElement>(null);
+  const selectedEvent = eventData.find(
+    (event) => event.RoundNumber === selectedSession?.round,
+  );
+  const sessionResults = selectedEvent?.[selectedSession?.session ?? "Race"] ?? [];
+
+  useEffect(() => {
+    const dialog = raceDialogRef.current;
+    if (!dialog) return;
+
+    if (selectedEvent && !dialog.open) {
+      dialog.showModal();
+    } else if (!selectedEvent && dialog.open) {
+      dialog.close();
+    }
+  }, [selectedEvent]);
+
   return (
     <main className="mx-auto min-h-screen w-full max-w-[1600px] px-4 py-10 sm:px-8 sm:py-16">
       <header className="mb-8 border-b border-white/10 pb-7">
@@ -197,9 +220,15 @@ export function App() {
                     scope="col"
                   >
                     <span className="block text-[10px] text-slate-500">Round {event.RoundNumber}</span>
-                    <span className="mt-1 block text-sm font-bold tracking-wide text-white">
+                    <button
+                      className="mt-1 block w-full cursor-pointer text-sm font-bold tracking-wide text-white underline decoration-white/20 underline-offset-4 transition hover:text-red-300 hover:decoration-red-300 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-300"
+                      onClick={() =>
+                        setSelectedSession({ round: event.RoundNumber, session: "Race" })
+                      }
+                      type="button"
+                    >
                       {event.ShortEventName}
-                    </span>
+                    </button>
                   </th>
                 ))}
                 <th
@@ -219,7 +248,18 @@ export function App() {
                           className="border-b border-white/10 px-3 pb-3 pt-3 text-center text-[10px] font-medium tracking-normal text-slate-500"
                           scope="col"
                         >
-                          Sprint
+                          <button
+                            className="cursor-pointer underline decoration-white/20 underline-offset-4 transition hover:text-red-300 hover:decoration-red-300 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-300"
+                            onClick={() =>
+                              setSelectedSession({
+                                round: event.RoundNumber,
+                                session: "Sprint",
+                              })
+                            }
+                            type="button"
+                          >
+                            Sprint
+                          </button>
                         </th>,
                       ]
                     : []),
@@ -228,7 +268,15 @@ export function App() {
                     className="border-b border-r border-white/10 px-3 pb-3 pt-3 text-center text-[10px] font-medium tracking-normal text-slate-500"
                     scope="col"
                   >
-                    Race
+                    <button
+                      className="cursor-pointer underline decoration-white/20 underline-offset-4 transition hover:text-red-300 hover:decoration-red-300 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-300"
+                      onClick={() =>
+                        setSelectedSession({ round: event.RoundNumber, session: "Race" })
+                      }
+                      type="button"
+                    >
+                      Race
+                    </button>
                   </th>,
                 ])}
               </tr>
@@ -272,6 +320,91 @@ export function App() {
           </table>
         </div>
       </section>
+
+      <dialog
+        ref={raceDialogRef}
+        aria-labelledby="race-results-title"
+        className="m-auto max-h-[min(85vh,48rem)] w-[min(42rem,calc(100%-2rem))] overflow-hidden rounded-2xl border border-white/10 bg-[#111318] p-0 text-slate-200 shadow-2xl backdrop:bg-black/70"
+        onClick={(clickEvent) => {
+          if (clickEvent.target === clickEvent.currentTarget) {
+            setSelectedSession(null);
+          }
+        }}
+        onClose={() => setSelectedSession(null)}
+      >
+        {selectedEvent && (
+          <>
+            <header className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-5 sm:px-7">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-red-400">
+                  Round {selectedEvent.RoundNumber} · {selectedSession?.session} results
+                </p>
+                <h2 id="race-results-title" className="mt-1 text-2xl font-bold text-white">
+                  {selectedEvent.EventName}
+                </h2>
+              </div>
+              <button
+                aria-label="Close race results"
+                className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300"
+                onClick={() => setSelectedSession(null)}
+                type="button"
+              >
+                Close
+              </button>
+            </header>
+
+            <div className="max-h-[calc(min(85vh,48rem)-6rem)] overflow-auto">
+              <table className="w-full border-collapse text-left">
+                <caption className="sr-only">
+                  {selectedEvent.EventName} {selectedSession?.session.toLowerCase()} results and starting grid positions
+                </caption>
+                <thead className="sticky top-0 bg-[#171a21] text-xs uppercase tracking-[0.12em] text-slate-400">
+                  <tr>
+                    <th className="px-5 py-3 font-semibold sm:px-7" scope="col">Pos</th>
+                    <th className="px-4 py-3 font-semibold" scope="col">Driver</th>
+                    <th className="px-4 py-3 font-semibold" scope="col">Team</th>
+                    <th className="px-5 py-3 text-right font-semibold sm:px-7" scope="col">
+                      Grid
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.06]">
+                  {[...sessionResults]
+                    .sort((first, second) => first.Position - second.Position)
+                    .map((result) => (
+                      <tr key={result.Abbreviation}>
+                        <td
+                          className={`px-5 py-3 font-bold tabular-nums sm:px-7 ${
+                            result.Status === "Retired"
+                              ? "text-red-300"
+                              : result.Position === 1
+                                ? "text-amber-300"
+                                : result.Position === 2
+                                  ? "text-sky-300"
+                                  : result.Position === 3
+                                    ? "text-amber-600"
+                                    : "text-slate-200"
+                          }`}
+                        >
+                          {result.Status === "Retired" ? "RET" : result.Position}
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-white">
+                          {result.Abbreviation}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-400">
+                          {result.TeamName}
+                        </td>
+                        <td className="px-5 py-3 text-right tabular-nums text-slate-300 sm:px-7">
+                          {result.GridPosition ?? "—"}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </dialog>
     </main>
   );
 }
