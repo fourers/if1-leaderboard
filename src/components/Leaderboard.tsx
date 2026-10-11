@@ -96,7 +96,7 @@ export function Leaderboard({
     >
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-white/10 px-5 py-5 sm:px-7">
         <div>
-          <h2 className="text-xl font-bold text-white">Season points by event</h2>
+          <h2 className="text-xl font-bold text-white">{season} season points by event</h2>
           <p className="mt-1 text-sm text-slate-500">
             {events.length} rounds · {rankedDrivers.length} drivers
           </p>
@@ -122,7 +122,11 @@ export function Leaderboard({
         </div>
       </div>
 
-      <div className={isFullscreen ? "min-h-0 flex-1 overflow-auto" : "overflow-auto"}>
+      <div
+        className={`leaderboard-scrollbar ${
+          isFullscreen ? "min-h-0 flex-1 overflow-auto" : "overflow-auto"
+        }`}
+      >
         <table className="w-full border-collapse text-left">
           <caption className="sr-only">
             {season} Formula 1 championship points per race and sprint for each driver

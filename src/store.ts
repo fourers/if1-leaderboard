@@ -41,7 +41,7 @@ function swapDrivers(drivers: string[], firstIndex: number, secondIndex: number)
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
-      selectedYear: 2025,
+      selectedYear: 2026,
       selectedSession: null,
       simulatedOrders: {},
       setSelectedYear: (selectedYear) =>
