@@ -147,21 +147,21 @@ export function ResultsModal({
                         <div className="flex items-center justify-center gap-2">
                           <button
                             aria-label={`Move ${result.Abbreviation} up`}
-                            className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/15 bg-[#222630] text-lg font-bold text-slate-200 shadow-[0_2px_0_#08090c] transition hover:border-white/25 hover:bg-[#303541] hover:text-white active:translate-y-0.5 active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300 disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none"
+                            className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/15 bg-[#222630] text-lg font-bold text-slate-200 shadow-[0_2px_0_#08090c] transition-transform hover:border-white/25 hover:bg-[#303541] hover:text-white active:translate-y-0.5 active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300 disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none"
                             disabled={index === 0}
                             onClick={() => onAdjust(driver, "up")}
                             type="button"
                           >
-                            ↑
+                            ▴
                           </button>
                           <button
                             aria-label={`Move ${result.Abbreviation} down`}
-                            className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/15 bg-[#222630] text-lg font-bold text-slate-200 shadow-[0_2px_0_#08090c] transition hover:border-white/25 hover:bg-[#303541] hover:text-white active:translate-y-0.5 active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300 disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none"
+                            className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/15 bg-[#222630] text-lg font-bold text-slate-200 shadow-[0_2px_0_#08090c] transition-transform hover:border-white/25 hover:bg-[#303541] hover:text-white active:translate-y-0.5 active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300 disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none"
                             disabled={isRetired && index === simulation.drivers.length - 1}
                             onClick={() => onAdjust(driver, "down")}
                             type="button"
                           >
-                            ↓
+                            ▾
                           </button>
                         </div>
                       </td>
