@@ -4,18 +4,17 @@ import type { SessionName } from "../store";
 
 function ResultCell({
   result,
-  originalPoints,
+  originalPosition,
   className,
 }: {
   result: ScoredResult | undefined;
-  originalPoints: number;
+  originalPosition: number | undefined;
   className: string;
 }) {
-  const pointsAdjustment = result ? result.points - originalPoints : 0;
-  const pointsCalculation =
-    result && pointsAdjustment !== 0
-      ? `${originalPoints}${pointsAdjustment > 0 ? "+" : ""}${pointsAdjustment}`
-      : result?.points;
+  const positionChanged =
+    result !== undefined &&
+    originalPosition !== undefined &&
+    result.position !== originalPosition;
   const resultColor = !result
     ? "text-slate-600"
     : result.status === "Retired"
@@ -32,23 +31,23 @@ function ResultCell({
     <td
       aria-label={
         result
-          ? `Position ${result.position}, ${
-              pointsAdjustment === 0
-                ? `${result.points} points`
-                : `points calculation: ${originalPoints} ${pointsAdjustment > 0 ? "plus" : "minus"} ${Math.abs(pointsAdjustment)}${
-                    result.points === 0 ? " equals zero" : ""
-                  }`
-            }, ${result.status}`
+          ? `Position ${result.position}${
+              positionChanged ? `, originally ${originalPosition}` : ""
+            }, ${result.points} points, ${result.status}`
           : "No result"
       }
       className={`${className} min-w-16 px-3 py-4 text-center font-semibold tabular-nums ${resultColor}`}
-      title={pointsAdjustment === 0 ? undefined : `Points: ${pointsCalculation}`}
     >
       {result ? (
         <>
+          {positionChanged && (
+            <sub className="mr-0.5 text-[9px] text-white font-medium opacity-75">
+              {originalPosition}{"▸"}
+            </sub>
+          )}
           {result.status === "Retired" ? "RET" : result.position}
-          {(result.points > 0 || pointsAdjustment !== 0) && (
-            <sup className="ml-0.5 text-[9px] font-medium opacity-75">{pointsCalculation}</sup>
+          {result.points > 0 && (
+            <sup className="ml-0.5 text-[9px] font-medium opacity-75">{result.points}</sup>
           )}
         </>
       ) : (
@@ -243,7 +242,7 @@ export function Leaderboard({
                           <ResultCell
                             key={`${event.RoundNumber}-sprint-${driver}`}
                             result={getResult(event.RoundNumber, "Sprint", driver)}
-                            originalPoints={sprintResults.get(driver)?.points ?? 0}
+                            originalPosition={sprintResults.get(driver)?.position}
                             className=""
                           />,
                         ]
@@ -251,7 +250,7 @@ export function Leaderboard({
                     <ResultCell
                       key={`${event.RoundNumber}-race-${driver}`}
                       result={getResult(event.RoundNumber, "Race", driver)}
-                      originalPoints={raceResults.get(driver)?.points ?? 0}
+                      originalPosition={raceResults.get(driver)?.position}
                       className={eventIndex < events.length - 1 ? "border-r border-white/10" : ""}
                     />,
                   ])}
