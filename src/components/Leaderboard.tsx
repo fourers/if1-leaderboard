@@ -148,16 +148,18 @@ export function Leaderboard({
           <thead className="sticky top-0 z-20 bg-[#171a21] text-xs uppercase tracking-[0.12em] text-slate-400">
             <tr>
               <th
-                className="sticky left-0 z-30 min-w-20 border-b border-r border-white/10 bg-[#171a21] px-5 py-4 font-semibold sm:px-7"
+                className="leaderboard-pinned-left sticky left-0 z-30 min-w-20 border-b border-white/10 bg-[#171a21] px-5 py-4 font-semibold sm:px-7"
                 rowSpan={2}
                 scope="col"
               >
                 Driver
               </th>
-              {events.map(({ event }) => (
+              {events.map(({ event }, eventIndex) => (
                 <th
                   key={event.RoundNumber}
-                  className="min-w-32 border-b border-r border-white/10 px-3 py-3 text-center font-semibold"
+                  className={`min-w-32 border-b border-white/10 px-3 py-3 text-center font-semibold ${
+                    eventIndex < events.length - 1 ? "border-r" : ""
+                  }`}
                   colSpan={event.Sprint?.length ? 2 : 1}
                   scope="col"
                 >
@@ -174,7 +176,7 @@ export function Leaderboard({
                 </th>
               ))}
               <th
-                className="sticky right-0 z-20 min-w-28 border-b border-l border-white/10 bg-[#171a21] px-4 py-4 text-center font-semibold"
+                className="leaderboard-pinned-right sticky right-0 z-20 min-w-28 border-b border-white/10 bg-[#171a21] px-4 py-4 text-center font-semibold"
                 rowSpan={2}
                 scope="col"
               >
@@ -182,7 +184,7 @@ export function Leaderboard({
               </th>
             </tr>
             <tr>
-              {events.flatMap(({ event, raceResults, sprintResults }) => [
+              {events.flatMap(({ event, raceResults, sprintResults }, eventIndex) => [
                 ...(event.Sprint?.length
                   ? [
                       <th
@@ -202,7 +204,9 @@ export function Leaderboard({
                   : []),
                 <th
                   key={`${event.RoundNumber}-race-label`}
-                  className="border-b border-r border-white/10 px-3 pb-3 pt-3 text-center text-[10px] font-medium tracking-normal text-slate-500"
+                  className={`border-b border-white/10 px-3 pb-3 pt-3 text-center text-[10px] font-medium tracking-normal text-slate-500 ${
+                    eventIndex < events.length - 1 ? "border-r" : ""
+                  }`}
                   scope="col"
                 >
                   <button
@@ -225,7 +229,7 @@ export function Leaderboard({
               return (
                 <tr key={driver} className="transition-colors hover:bg-white/[0.025]">
                   <th
-                    className="sticky left-0 z-10 border-r border-white/10 bg-[#111318] px-5 py-4 text-left sm:px-7"
+                    className="leaderboard-pinned-left sticky left-0 z-10 bg-[#111318] px-5 py-4 text-left sm:px-7"
                     scope="row"
                   >
                     <span className="mr-2 text-xs font-semibold tabular-nums text-slate-500">
@@ -233,7 +237,7 @@ export function Leaderboard({
                     </span>
                     <span className="font-bold tracking-wide text-slate-200">{driver}</span>
                   </th>
-                  {events.flatMap(({ event, raceResults, sprintResults }) => [
+                  {events.flatMap(({ event, raceResults, sprintResults }, eventIndex) => [
                     ...(event.Sprint?.length
                       ? [
                           <ResultCell
@@ -248,7 +252,7 @@ export function Leaderboard({
                       key={`${event.RoundNumber}-race-${driver}`}
                       result={getResult(event.RoundNumber, "Race", driver)}
                       originalPoints={raceResults.get(driver)?.points ?? 0}
-                      className="border-r border-white/10"
+                      className={eventIndex < events.length - 1 ? "border-r border-white/10" : ""}
                     />,
                   ])}
                   <td
@@ -257,7 +261,7 @@ export function Leaderboard({
                         ? ""
                         : `, ${adjustment > 0 ? "increased" : "decreased"} by ${Math.abs(adjustment)}`
                     }`}
-                    className="sticky right-0 z-10 border-l border-white/10 bg-[#111318] px-4 py-4 text-center font-bold tabular-nums text-green-200"
+                    className="leaderboard-pinned-right sticky right-0 z-10 bg-[#111318] px-4 py-4 text-center font-bold tabular-nums text-green-200"
                   >
                     {total}
                     {adjustment !== 0 && (
