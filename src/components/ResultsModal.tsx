@@ -1,5 +1,11 @@
 import { useEffect, useRef } from "react";
-import { getDefaultSimulation, pointsForSession, type RaceEvent, type RaceResult } from "../season";
+import {
+  formatPosition,
+  getDefaultSimulation,
+  pointsForSession,
+  type RaceEvent,
+  type RaceResult,
+} from "../season";
 import type { SessionName, SimulatedOrder } from "../store";
 
 type ResultsModalProps = {
@@ -114,7 +120,7 @@ export function ResultsModal({
                   return (
                     <tr key={result.Abbreviation}>
                       <td className={`px-5 py-3 font-bold tabular-nums sm:px-7 ${positionColor}`}>
-                        {isRetired ? "RET" : currentPosition}
+                        {formatPosition(currentPosition ?? 0, isRetired ? "Retired" : result.Status)}
                       </td>
                       <td className="px-4 py-3 tabular-nums text-slate-500">{result.Position}</td>
                       <td className="px-4 py-3 font-semibold text-white">

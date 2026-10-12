@@ -241,3 +241,11 @@ export function getDefaultSimulation(results: readonly RaceResult[]): SimulatedO
     classifiedCount: originalOrder.filter((result) => result.Status !== "Retired").length,
   };
 }
+
+export function formatPosition(position: number, positionStatus: string): string {
+  if (positionStatus === "Retired" || positionStatus === "Did not start") {
+    return "RET";
+  } else {
+    return position.toString();
+  }
+}
