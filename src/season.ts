@@ -31,6 +31,12 @@ export type SeasonData = {
   drivers: string[];
 };
 
+export const resultStatus = {
+  finished: "Finished",
+  retired: "Retired",
+  didNotStart: "Did not start",
+} as const;
+
 const pointsSystem: Record<"grand_prix" | "sprint_race", ScoringSystem> = {
   grand_prix: {
     scoring_positions: 10,
@@ -86,7 +92,8 @@ export const seasons: SeasonData[] = seasonData.map(({ Season, Events }) => {
       raceResults.set(result.Abbreviation, {
         position: result.Position,
         points:
-          result.Status === "Retired"
+          result.Status === resultStatus.retired ||
+          result.Status === resultStatus.didNotStart
             ? 0
             : pointsForPosition(result.Position, pointsSystem.grand_prix),
         status: result.Status,
@@ -97,7 +104,8 @@ export const seasons: SeasonData[] = seasonData.map(({ Season, Events }) => {
       sprintResults.set(result.Abbreviation, {
         position: result.Position,
         points:
-          result.Status === "Retired"
+          result.Status === resultStatus.retired ||
+          result.Status === resultStatus.didNotStart
             ? 0
             : pointsForPosition(result.Position, pointsSystem.sprint_race),
         status: result.Status,
@@ -142,19 +150,33 @@ export function getCurrentResult(
   const index = order.drivers.indexOf(driver);
   if (index < 0) return original;
 
-  const isRetired = index >= order.classifiedCount;
-  const position = isRetired ? original.position : index + 1;
-  const status = isRetired
-    ? "Retired"
-    : original.status === "Retired"
-      ? "Finished"
+  const sessionResults =
+    session === "Race" ? event.event.Race ?? [] : event.event.Sprint ?? [];
+  const defaultOrder = getDefaultSimulation(sessionResults);
+  const startedCount = order.startedCount ?? defaultOrder.startedCount ?? order.drivers.length;
+  const classifiedCount = Math.min(order.classifiedCount, startedCount);
+  const isStarted = index < startedCount;
+  const isClassified = index < classifiedCount;
+  const position = isClassified ? index + 1 : original.position;
+  const status = !isStarted
+    ? resultStatus.didNotStart
+    : !isClassified
+      ? resultStatus.retired
+      : original.status === resultStatus.retired ||
+          original.status === resultStatus.didNotStart
+      ? resultStatus.finished
       : original.status;
 
   return {
     ...original,
     position,
     status,
-    points: status === "Retired" ? 0 : pointsForSession(position, session),
+    points:
+      isClassified &&
+      status !== resultStatus.retired &&
+      status !== resultStatus.didNotStart
+        ? pointsForSession(position, session)
+        : 0,
   };
 }
 
@@ -199,7 +221,11 @@ export function getSeasonStandings(
         (originalTotals.get(driver) ?? 0) + originalPoints,
       );
 
-      if (raceResult && raceResult.status !== "Retired") {
+      if (
+        raceResult &&
+        raceResult.status !== resultStatus.retired &&
+        raceResult.status !== resultStatus.didNotStart
+      ) {
         const positions = racePositionCounts.get(driver);
         if (positions) {
           positions.set(
@@ -238,14 +264,23 @@ export function getDefaultSimulation(results: readonly RaceResult[]): SimulatedO
 
   return {
     drivers: originalOrder.map((result) => result.Abbreviation),
-    classifiedCount: originalOrder.filter((result) => result.Status !== "Retired").length,
+    classifiedCount: originalOrder.filter(
+      (result) =>
+        result.Status !== resultStatus.retired &&
+        result.Status !== resultStatus.didNotStart,
+    ).length,
+    startedCount: originalOrder.filter(
+      (result) => result.Status !== resultStatus.didNotStart,
+    ).length,
   };
 }
 
 export function formatPosition(position: number, positionStatus: string): string {
-  if (positionStatus === "Retired" || positionStatus === "Did not start") {
-    return "RET";
-  } else {
-    return position.toString();
+  if (positionStatus === resultStatus.didNotStart) {
+    return "DNS";
   }
+  if (positionStatus === resultStatus.retired) {
+    return "DNF";
+  }
+  return position.toString();
 }

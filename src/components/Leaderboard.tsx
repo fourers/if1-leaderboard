@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { formatPosition, type EventSeasonData, type ScoredResult } from "../season";
+import {
+  formatPosition,
+  resultStatus,
+  type EventSeasonData,
+  type ScoredResult,
+} from "../season";
 import type { SessionName } from "../store";
 
 function ResultCell({
@@ -17,7 +22,8 @@ function ResultCell({
     result.position !== originalPosition;
   const resultColor = !result
     ? "text-slate-600"
-    : result.status === "Retired" || result.status === "Did not start"
+    : result.status === resultStatus.retired ||
+        result.status === resultStatus.didNotStart
       ? "text-red-300"
       : result.position === 1
         ? "text-amber-300"

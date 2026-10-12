@@ -6,6 +6,7 @@ export type SessionName = "Race" | "Sprint";
 export type SimulatedOrder = {
   drivers: string[];
   classifiedCount: number;
+  startedCount?: number;
 };
 
 type SelectedSession = {
@@ -54,25 +55,37 @@ export const useAppStore = create<AppState>()(
           const index = drivers.indexOf(driver);
           if (index < 0) return state;
 
-          let classifiedCount = activeSimulation.classifiedCount;
+          let startedCount =
+            Math.min(
+              activeSimulation.startedCount ?? defaultOrder.startedCount ?? drivers.length,
+              drivers.length,
+            );
+          let classifiedCount = Math.min(activeSimulation.classifiedCount, startedCount);
           if (direction === "up") {
-            if (index === classifiedCount && index < drivers.length) {
+            if (index === startedCount && index < drivers.length) {
+              startedCount += 1;
+            } else if (index === classifiedCount && index < startedCount) {
               classifiedCount += 1;
             } else if (index > 0) {
               swapDrivers(drivers, index - 1, index);
             }
           } else if (index === classifiedCount - 1) {
             classifiedCount -= 1;
-          } else if (index >= classifiedCount && index < drivers.length - 1) {
-            swapDrivers(drivers, index, index + 1);
           } else if (index < classifiedCount - 1) {
+            swapDrivers(drivers, index, index + 1);
+          } else if (
+            index >= classifiedCount &&
+            index < startedCount - 1
+          ) {
+            swapDrivers(drivers, index, index + 1);
+          } else if (index >= startedCount && index < drivers.length - 1) {
             swapDrivers(drivers, index, index + 1);
           }
 
           return {
             simulatedOrders: {
               ...state.simulatedOrders,
-              [key]: { drivers, classifiedCount },
+              [key]: { drivers, classifiedCount, startedCount },
             },
           };
         }),

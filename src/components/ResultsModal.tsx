@@ -3,6 +3,7 @@ import {
   formatPosition,
   getDefaultSimulation,
   pointsForSession,
+  resultStatus,
   type RaceEvent,
   type RaceResult,
 } from "../season";
@@ -31,6 +32,9 @@ export function ResultsModal({
   const results: readonly RaceResult[] = event && session ? event[session] ?? [] : [];
   const defaultSimulation = getDefaultSimulation(results);
   const simulation = savedSimulation ?? defaultSimulation;
+  const startedCount =
+    simulation.startedCount ?? defaultSimulation.startedCount ?? simulation.drivers.length;
+  const classifiedCount = Math.min(simulation.classifiedCount, startedCount);
   const resultsByDriver = new Map(results.map((result) => [result.Abbreviation, result]));
 
   useEffect(() => {
@@ -107,22 +111,34 @@ export function ResultsModal({
                   const result = resultsByDriver.get(driver);
                   if (!result) return null;
 
-                  const isRetired = index >= simulation.classifiedCount;
-                  const currentPosition = isRetired ? null : index + 1;
+                  const isDns = index >= startedCount;
+                  const isDnf = index >= classifiedCount && !isDns;
+                  const currentPosition = isDnf || isDns ? null : index + 1;
+                  const positionStatus = isDns
+                    ? resultStatus.didNotStart
+                    : isDnf
+                      ? resultStatus.retired
+                      : result.Status === resultStatus.retired ||
+                          result.Status === resultStatus.didNotStart
+                        ? resultStatus.finished
+                        : result.Status;
                   const adjustedPoints = pointsForSession(currentPosition ?? 0, session);
                   const originalPoints =
-                    result.Status === "Retired"
+                    result.Status === resultStatus.retired ||
+                    result.Status === resultStatus.didNotStart
                       ? 0
                       : pointsForSession(result.Position, session);
                   const pointsDifference = adjustedPoints - originalPoints;
-                  const positionColor = getPositionColor(currentPosition, isRetired);
+                  const positionColor = getPositionColor(currentPosition, isDnf || isDns);
 
                   return (
                     <tr key={result.Abbreviation}>
                       <td className={`px-5 py-3 font-bold tabular-nums sm:px-7 ${positionColor}`}>
-                        {formatPosition(currentPosition ?? 0, isRetired ? "Retired" : result.Status)}
+                        {formatPosition(currentPosition ?? 0, positionStatus)}
                       </td>
-                      <td className="px-4 py-3 tabular-nums text-slate-500">{result.Position}</td>
+                      <td className="px-4 py-3 tabular-nums text-slate-500">
+                        {formatPosition(result.Position, result.Status)}
+                      </td>
                       <td className="px-4 py-3 font-semibold text-white">
                         {result.Abbreviation}
                       </td>
@@ -152,9 +168,17 @@ export function ResultsModal({
                       <td className="whitespace-nowrap px-4 py-2">
                         <div className="flex items-center justify-center gap-2">
                           <button
-                            aria-label={`Move ${result.Abbreviation} up`}
+                            aria-label={
+                              index === startedCount
+                                ? `Upgrade ${result.Abbreviation} from DNS to DNF`
+                                : `Move ${result.Abbreviation} up`
+                            }
                             className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/15 bg-[#222630] text-lg font-bold text-slate-200 shadow-[0_2px_0_#08090c] transition-transform hover:border-white/25 hover:bg-[#303541] hover:text-white active:translate-y-0.5 active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300 disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none"
-                            disabled={index === 0}
+                            disabled={
+                              index === 0 &&
+                              index !== classifiedCount &&
+                              index !== startedCount
+                            }
                             onClick={() => onAdjust(driver, "up")}
                             type="button"
                           >
@@ -163,7 +187,10 @@ export function ResultsModal({
                           <button
                             aria-label={`Move ${result.Abbreviation} down`}
                             className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/15 bg-[#222630] text-lg font-bold text-slate-200 shadow-[0_2px_0_#08090c] transition-transform hover:border-white/25 hover:bg-[#303541] hover:text-white active:translate-y-0.5 active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300 disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none"
-                            disabled={isRetired && index === simulation.drivers.length - 1}
+                            disabled={
+                              index === simulation.drivers.length - 1 ||
+                              (index === startedCount - 1 && index >= classifiedCount)
+                            }
                             onClick={() => onAdjust(driver, "down")}
                             type="button"
                           >
