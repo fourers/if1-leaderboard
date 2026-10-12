@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   formatPosition,
+  nonStartingStatuses,
   resultStatus,
   type EventSeasonData,
   type ScoredResult,
@@ -23,7 +24,7 @@ function ResultCell({
   const resultColor = !result
     ? "text-slate-600"
     : result.status === resultStatus.retired ||
-        result.status === resultStatus.didNotStart
+        nonStartingStatuses.has(result.status)
       ? "text-red-300"
       : result.position === 1
         ? "text-amber-300"

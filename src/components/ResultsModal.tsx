@@ -2,6 +2,8 @@ import { useEffect, useRef } from "react";
 import {
   formatPosition,
   getDefaultSimulation,
+  nonScoringStatuses,
+  nonStartingStatuses,
   pointsForSession,
   resultStatus,
   type RaceEvent,
@@ -111,25 +113,22 @@ export function ResultsModal({
                   const result = resultsByDriver.get(driver);
                   if (!result) return null;
 
-                  const isDns = index >= startedCount;
-                  const isDnf = index >= classifiedCount && !isDns;
-                  const currentPosition = isDnf || isDns ? null : index + 1;
-                  const positionStatus = isDns
-                    ? resultStatus.didNotStart
+                  const isNonStarter = index >= startedCount;
+                  const isDnf = index >= classifiedCount && !isNonStarter;
+                  const currentPosition = isDnf || isNonStarter ? null : index + 1;
+                  const positionStatus = isNonStarter
+                    ? result.Status
                     : isDnf
                       ? resultStatus.retired
-                      : result.Status === resultStatus.retired ||
-                          result.Status === resultStatus.didNotStart
+                      : nonScoringStatuses.has(result.Status)
                         ? resultStatus.finished
                         : result.Status;
                   const adjustedPoints = pointsForSession(currentPosition ?? 0, session);
-                  const originalPoints =
-                    result.Status === resultStatus.retired ||
-                    result.Status === resultStatus.didNotStart
-                      ? 0
-                      : pointsForSession(result.Position, session);
+                  const originalPoints = nonScoringStatuses.has(result.Status)
+                    ? 0
+                    : pointsForSession(result.Position, session);
                   const pointsDifference = adjustedPoints - originalPoints;
-                  const positionColor = getPositionColor(currentPosition, isDnf || isDns);
+                  const positionColor = getPositionColor(currentPosition, isDnf || isNonStarter);
 
                   return (
                     <tr key={result.Abbreviation}>
@@ -170,14 +169,18 @@ export function ResultsModal({
                           <button
                             aria-label={
                               index === startedCount
-                                ? `Upgrade ${result.Abbreviation} from DNS to DNF`
+                                ? `Upgrade ${result.Abbreviation} from ${formatPosition(
+                                    0,
+                                    result.Status,
+                                  )} to DNF`
                                 : `Move ${result.Abbreviation} up`
                             }
                             className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/15 bg-[#222630] text-lg font-bold text-slate-200 shadow-[0_2px_0_#08090c] transition-transform hover:border-white/25 hover:bg-[#303541] hover:text-white active:translate-y-0.5 active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300 disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none"
                             disabled={
                               index === 0 &&
                               index !== classifiedCount &&
-                              index !== startedCount
+                              (index !== startedCount ||
+                                !nonStartingStatuses.has(result.Status))
                             }
                             onClick={() => onAdjust(driver, "up")}
                             type="button"

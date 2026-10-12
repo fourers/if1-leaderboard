@@ -35,7 +35,24 @@ export const resultStatus = {
   finished: "Finished",
   retired: "Retired",
   didNotStart: "Did not start",
+  disqualified: "Disqualified",
 } as const;
+
+export const nonStartingStatuses: ReadonlySet<string> = new Set([
+  resultStatus.didNotStart,
+  resultStatus.disqualified,
+]);
+
+export const nonScoringStatuses: ReadonlySet<string> = new Set([
+  resultStatus.retired,
+  ...nonStartingStatuses,
+]);
+
+const positionStatusLabels: Readonly<Record<string, string>> = {
+  [resultStatus.retired]: "DNF",
+  [resultStatus.didNotStart]: "DNS",
+  [resultStatus.disqualified]: "DSQ",
+};
 
 const pointsSystem: Record<"grand_prix" | "sprint_race", ScoringSystem> = {
   grand_prix: {
@@ -91,11 +108,9 @@ export const seasons: SeasonData[] = seasonData.map(({ Season, Events }) => {
     for (const result of event.Race ?? []) {
       raceResults.set(result.Abbreviation, {
         position: result.Position,
-        points:
-          result.Status === resultStatus.retired ||
-          result.Status === resultStatus.didNotStart
-            ? 0
-            : pointsForPosition(result.Position, pointsSystem.grand_prix),
+        points: nonScoringStatuses.has(result.Status)
+          ? 0
+          : pointsForPosition(result.Position, pointsSystem.grand_prix),
         status: result.Status,
       });
     }
@@ -103,11 +118,9 @@ export const seasons: SeasonData[] = seasonData.map(({ Season, Events }) => {
     for (const result of event.Sprint ?? []) {
       sprintResults.set(result.Abbreviation, {
         position: result.Position,
-        points:
-          result.Status === resultStatus.retired ||
-          result.Status === resultStatus.didNotStart
-            ? 0
-            : pointsForPosition(result.Position, pointsSystem.sprint_race),
+        points: nonScoringStatuses.has(result.Status)
+          ? 0
+          : pointsForPosition(result.Position, pointsSystem.sprint_race),
         status: result.Status,
       });
     }
@@ -158,23 +171,18 @@ export function getCurrentResult(
   const isStarted = index < startedCount;
   const isClassified = index < classifiedCount;
   const position = isClassified ? index + 1 : original.position;
-  const status = !isStarted
-    ? resultStatus.didNotStart
-    : !isClassified
-      ? resultStatus.retired
-      : original.status === resultStatus.retired ||
-          original.status === resultStatus.didNotStart
-      ? resultStatus.finished
-      : original.status;
+  let status = original.status;
+  if (isStarted && !isClassified) {
+    status = resultStatus.retired;
+  } else if (isClassified && nonScoringStatuses.has(original.status)) {
+    status = resultStatus.finished;
+  }
 
   return {
     ...original,
     position,
     status,
-    points:
-      isClassified &&
-      status !== resultStatus.retired &&
-      status !== resultStatus.didNotStart
+    points: isClassified && !nonScoringStatuses.has(status)
         ? pointsForSession(position, session)
         : 0,
   };
@@ -221,11 +229,7 @@ export function getSeasonStandings(
         (originalTotals.get(driver) ?? 0) + originalPoints,
       );
 
-      if (
-        raceResult &&
-        raceResult.status !== resultStatus.retired &&
-        raceResult.status !== resultStatus.didNotStart
-      ) {
+      if (raceResult && !nonScoringStatuses.has(raceResult.status)) {
         const positions = racePositionCounts.get(driver);
         if (positions) {
           positions.set(
@@ -264,23 +268,15 @@ export function getDefaultSimulation(results: readonly RaceResult[]): SimulatedO
 
   return {
     drivers: originalOrder.map((result) => result.Abbreviation),
-    classifiedCount: originalOrder.filter(
-      (result) =>
-        result.Status !== resultStatus.retired &&
-        result.Status !== resultStatus.didNotStart,
+    classifiedCount: originalOrder.filter((result) =>
+      !nonScoringStatuses.has(result.Status),
     ).length,
     startedCount: originalOrder.filter(
-      (result) => result.Status !== resultStatus.didNotStart,
+      (result) => !nonStartingStatuses.has(result.Status),
     ).length,
   };
 }
 
 export function formatPosition(position: number, positionStatus: string): string {
-  if (positionStatus === resultStatus.didNotStart) {
-    return "DNS";
-  }
-  if (positionStatus === resultStatus.retired) {
-    return "DNF";
-  }
-  return position.toString();
+  return positionStatusLabels[positionStatus] ?? position.toString();
 }
