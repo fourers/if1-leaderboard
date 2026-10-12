@@ -33,10 +33,10 @@ function ResultCell({
         result
           ? `Position ${result.position}${
               positionChanged ? `, originally ${originalPosition}` : ""
-            }, ${result.points} points, ${result.status}`
+            }, ${result.status}`
           : "No result"
       }
-      className={`${className} min-w-16 px-3 py-4 text-center font-semibold tabular-nums ${resultColor}`}
+      className={`${className} min-w-16 whitespace-nowrap px-3 py-4 text-center font-semibold tabular-nums ${resultColor}`}
     >
       {result ? (
         <>
@@ -46,9 +46,6 @@ function ResultCell({
             </sub>
           )}
           {result.status === "Retired" ? "RET" : result.position}
-          {result.points > 0 && (
-            <sup className="ml-0.5 text-[9px] font-medium opacity-75">{result.points}</sup>
-          )}
         </>
       ) : (
         "—"
