@@ -48,12 +48,6 @@ export const nonScoringStatuses: ReadonlySet<string> = new Set([
   ...nonStartingStatuses,
 ]);
 
-const positionStatusLabels: Readonly<Record<string, string>> = {
-  [resultStatus.retired]: "DNF",
-  [resultStatus.didNotStart]: "DNS",
-  [resultStatus.disqualified]: "DSQ",
-};
-
 const pointsSystem: Record<"grand_prix" | "sprint_race", ScoringSystem> = {
   grand_prix: {
     scoring_positions: 10,
@@ -275,8 +269,4 @@ export function getDefaultSimulation(results: readonly RaceResult[]): SimulatedO
       (result) => !nonStartingStatuses.has(result.Status),
     ).length,
   };
-}
-
-export function formatPosition(position: number, positionStatus: string): string {
-  return positionStatusLabels[positionStatus] ?? position.toString();
 }

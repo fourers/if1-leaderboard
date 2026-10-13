@@ -1,14 +1,6 @@
 import { useEffect, useRef } from "react";
-import {
-  formatPosition,
-  getDefaultSimulation,
-  nonScoringStatuses,
-  nonStartingStatuses,
-  pointsForSession,
-  resultStatus,
-  type RaceEvent,
-  type RaceResult,
-} from "../season";
+import { getDefaultSimulation, nonScoringStatuses, nonStartingStatuses, pointsForSession, resultStatus, type RaceEvent, type RaceResult } from "../season";
+import { formatPosition, getPositionColour } from "../utils/formatter";
 import type { SessionName, SimulatedOrder } from "../store";
 
 type ResultsModalProps = {
@@ -128,11 +120,11 @@ export function ResultsModal({
                     ? 0
                     : pointsForSession(result.Position, session);
                   const pointsDifference = adjustedPoints - originalPoints;
-                  const positionColor = getPositionColor(currentPosition, isDnf || isNonStarter);
+                  const positionColour = getPositionColour(currentPosition, positionStatus);
 
                   return (
                     <tr key={result.Abbreviation}>
-                      <td className={`px-5 py-3 font-bold tabular-nums sm:px-7 ${positionColor}`}>
+                      <td className={`px-5 py-3 font-bold tabular-nums sm:px-7 ${positionColour}`}>
                         {formatPosition(currentPosition ?? 0, positionStatus)}
                       </td>
                       <td className="px-4 py-3 tabular-nums text-slate-500">
@@ -211,12 +203,4 @@ export function ResultsModal({
       )}
     </dialog>
   );
-}
-
-function getPositionColor(position: number | null, isRetired: boolean) {
-  if (isRetired) return "text-red-300";
-  if (position === 1) return "text-amber-300";
-  if (position === 2) return "text-sky-300";
-  if (position === 3) return "text-amber-600";
-  return "text-slate-200";
 }

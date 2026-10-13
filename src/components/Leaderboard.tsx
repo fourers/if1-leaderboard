@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
-import {
-  formatPosition,
-  nonStartingStatuses,
-  resultStatus,
-  type EventSeasonData,
-  type ScoredResult,
-} from "../season";
+import { type EventSeasonData, type ScoredResult } from "../season";
+import { formatPosition, getPositionColour } from "../utils/formatter";
 import type { SessionName } from "../store";
 
 function ResultCell({
@@ -21,18 +16,9 @@ function ResultCell({
     result !== undefined &&
     originalPosition !== undefined &&
     result.position !== originalPosition;
-  const resultColor = !result
-    ? "text-slate-600"
-    : result.status === resultStatus.retired ||
-        nonStartingStatuses.has(result.status)
-      ? "text-red-300"
-      : result.position === 1
-        ? "text-amber-300"
-        : result.position === 2
-          ? "text-sky-300"
-          : result.position === 3
-            ? "text-amber-600"
-            : "text-white";
+  const resultColour = result
+    ? getPositionColour(result.position, result.status, "text-white")
+    : "text-slate-600";
 
   return (
     <td
@@ -43,7 +29,7 @@ function ResultCell({
             }, ${result.status}`
           : "No result"
       }
-      className={`${className} min-w-16 whitespace-nowrap px-3 py-4 text-center font-semibold tabular-nums ${resultColor}`}
+      className={`${className} min-w-16 whitespace-nowrap px-3 py-4 text-center font-semibold tabular-nums ${resultColour}`}
     >
       {result ? (
         <>
