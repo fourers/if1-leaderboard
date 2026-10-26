@@ -69,16 +69,21 @@ export function ResultsModal({
             </div>
             <div className="flex flex-wrap items-center justify-end gap-2">
               <button
-                aria-pressed={resultsVoided}
-                className={`whitespace-nowrap rounded-lg border px-3 py-1.5 text-sm transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300 ${
-                  resultsVoided
-                    ? "border-red-400/40 bg-red-400/10 text-red-200 hover:bg-red-400/20"
-                    : "border-white/10 text-slate-300 hover:bg-white/10 hover:text-white"
+                aria-label="Nullify results"
+                aria-checked={resultsVoided}
+                className={`relative h-6 w-11 rounded-full transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300 ${
+                  resultsVoided ? "bg-slate-600" : "bg-green-500"
                 }`}
                 onClick={onToggleResultsVoided}
+                role="switch"
                 type="button"
               >
-                {resultsVoided ? "Restore results" : "Nullify results"}
+                <span
+                  aria-hidden="true"
+                  className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                    resultsVoided ? "translate-x-0" : "translate-x-5"
+                  }`}
+                />
               </button>
               <button
                 className="whitespace-nowrap rounded-lg border border-white/10 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300 disabled:cursor-not-allowed disabled:opacity-40"
@@ -99,20 +104,9 @@ export function ResultsModal({
             </div>
           </header>
 
-          {resultsVoided && (
-            <p
-              aria-live="polite"
-              className="border-b border-red-400/20 bg-red-400/[0.06] px-5 py-3 text-sm text-red-200 sm:px-7"
-            >
-              These {session.toLowerCase()} results are nullified and do not count toward the standings.
-            </p>
-          )}
-
           <div
             className={
-              resultsVoided
-                ? "max-h-[calc(min(85vh,48rem)-9rem)] overflow-auto"
-                : "max-h-[calc(min(85vh,48rem)-6rem)] overflow-auto"
+              "max-h-[calc(min(85vh,48rem)-6rem)] overflow-auto"
             }
           >
             <table className="w-full border-collapse text-left">
