@@ -8,7 +8,9 @@ type ResultsModalProps = {
   session: SessionName | undefined;
   simulation: SimulatedOrder | undefined;
   hasChanges: boolean;
+  resultsVoided: boolean;
   onAdjust: (driver: string, direction: "up" | "down") => void;
+  onToggleResultsVoided: () => void;
   onReset: () => void;
   onClose: () => void;
 };
@@ -18,7 +20,9 @@ export function ResultsModal({
   session,
   simulation: savedSimulation,
   hasChanges,
+  resultsVoided,
   onAdjust,
+  onToggleResultsVoided,
   onReset,
   onClose,
 }: ResultsModalProps) {
@@ -63,9 +67,21 @@ export function ResultsModal({
                 {event.EventName}
               </h2>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-2">
               <button
-                className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-pressed={resultsVoided}
+                className={`whitespace-nowrap rounded-lg border px-3 py-1.5 text-sm transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300 ${
+                  resultsVoided
+                    ? "border-red-400/40 bg-red-400/10 text-red-200 hover:bg-red-400/20"
+                    : "border-white/10 text-slate-300 hover:bg-white/10 hover:text-white"
+                }`}
+                onClick={onToggleResultsVoided}
+                type="button"
+              >
+                {resultsVoided ? "Restore results" : "Nullify results"}
+              </button>
+              <button
+                className="whitespace-nowrap rounded-lg border border-white/10 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300 disabled:cursor-not-allowed disabled:opacity-40"
                 disabled={!hasChanges}
                 onClick={onReset}
                 type="button"
@@ -74,7 +90,7 @@ export function ResultsModal({
               </button>
               <button
                 aria-label="Close race results"
-                className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300"
+                className="whitespace-nowrap rounded-lg border border-white/10 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300"
                 onClick={onClose}
                 type="button"
               >
@@ -83,7 +99,22 @@ export function ResultsModal({
             </div>
           </header>
 
-          <div className="max-h-[calc(min(85vh,48rem)-6rem)] overflow-auto">
+          {resultsVoided && (
+            <p
+              aria-live="polite"
+              className="border-b border-red-400/20 bg-red-400/[0.06] px-5 py-3 text-sm text-red-200 sm:px-7"
+            >
+              These {session.toLowerCase()} results are nullified and do not count toward the standings.
+            </p>
+          )}
+
+          <div
+            className={
+              resultsVoided
+                ? "max-h-[calc(min(85vh,48rem)-9rem)] overflow-auto"
+                : "max-h-[calc(min(85vh,48rem)-6rem)] overflow-auto"
+            }
+          >
             <table className="w-full border-collapse text-left">
               <caption className="sr-only">
                 {event.EventName} {session.toLowerCase()} results and starting grid positions
@@ -115,7 +146,9 @@ export function ResultsModal({
                       : nonScoringStatuses.has(result.Status)
                         ? resultStatus.finished
                         : result.Status;
-                  const adjustedPoints = pointsForSession(currentPosition ?? 0, session);
+                  const adjustedPoints = resultsVoided
+                    ? 0
+                    : pointsForSession(currentPosition ?? 0, session);
                   const originalPoints = nonScoringStatuses.has(result.Status)
                     ? 0
                     : pointsForSession(result.Position, session);

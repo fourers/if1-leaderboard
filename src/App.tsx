@@ -18,6 +18,7 @@ export function App() {
   const setSelectedYear = useAppStore((state) => state.setSelectedYear);
   const setSelectedSession = useAppStore((state) => state.setSelectedSession);
   const updatePosition = useAppStore((state) => state.adjustPosition);
+  const toggleResultsVoided = useAppStore((state) => state.toggleResultsVoided);
   const resetSessionPositions = useAppStore((state) => state.resetSessionPositions);
   const resetAllPositions = useAppStore((state) => state.resetAllPositions);
 
@@ -35,6 +36,7 @@ export function App() {
     : "";
   const defaultSimulation = getDefaultSimulation(sessionResults);
   const hasSessionChanges = simulatedOrders[simulationKey] !== undefined;
+  const resultsVoided = simulatedOrders[simulationKey]?.resultsVoided ?? false;
   const { totals, originalTotals, rankedDrivers } = getSeasonStandings(
     season.events,
     simulatedOrders,
@@ -103,7 +105,9 @@ export function App() {
         session={selectedSession?.session}
         simulation={simulatedOrders[simulationKey]}
         hasChanges={hasSessionChanges}
+        resultsVoided={resultsVoided}
         onAdjust={adjustPosition}
+        onToggleResultsVoided={() => toggleResultsVoided(simulationKey, defaultSimulation)}
         onReset={() => resetSessionPositions(simulationKey)}
         onClose={() => setSelectedSession(null)}
       />

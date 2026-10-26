@@ -7,6 +7,7 @@ export type SimulatedOrder = {
   drivers: string[];
   classifiedCount: number;
   startedCount?: number;
+  resultsVoided?: boolean;
 };
 
 type SelectedSession = {
@@ -26,6 +27,7 @@ type AppState = {
     driver: string,
     direction: "up" | "down",
   ) => void;
+  toggleResultsVoided: (key: string, defaultOrder: SimulatedOrder) => void;
   resetSessionPositions: (key: string) => void;
   resetAllPositions: () => void;
 };
@@ -85,7 +87,25 @@ export const useAppStore = create<AppState>()(
           return {
             simulatedOrders: {
               ...state.simulatedOrders,
-              [key]: { drivers, classifiedCount, startedCount },
+              [key]: {
+                ...activeSimulation,
+                drivers,
+                classifiedCount,
+                startedCount,
+              },
+            },
+          };
+        }),
+      toggleResultsVoided: (key, defaultOrder) =>
+        set((state) => {
+          const activeSimulation = state.simulatedOrders[key] ?? defaultOrder;
+          return {
+            simulatedOrders: {
+              ...state.simulatedOrders,
+              [key]: {
+                ...activeSimulation,
+                resultsVoided: !activeSimulation.resultsVoided,
+              },
             },
           };
         }),
@@ -98,9 +118,9 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "f1-leaderboard-state",
-      version: 3,
+      version: 4,
       migrate: (persistedState, version) => {
-        if (version >= 3 || typeof persistedState !== "object" || persistedState === null) {
+        if (version >= 4 || typeof persistedState !== "object" || persistedState === null) {
           return persistedState as AppState;
         }
 
@@ -109,10 +129,22 @@ export const useAppStore = create<AppState>()(
         >;
         const year = previousState.selectedYear ?? 2025;
         const simulatedOrders = Object.fromEntries(
-          Object.entries(previousState.simulatedOrders ?? {}).map(([key, order]) => [
-            /^\d{4}-\d+-(Race|Sprint)$/.test(key) ? key : `${year}-${key}`,
-            order,
-          ]),
+          Object.entries(previousState.simulatedOrders ?? {}).map(([key, order]) => {
+            const migratedKey = /^\d{4}-\d+-(Race|Sprint)$/.test(key)
+              ? key
+              : `${year}-${key}`;
+            const { eventVoided, ...simulation } = order as SimulatedOrder & {
+              eventVoided?: boolean;
+            };
+
+            return [
+              migratedKey,
+              {
+                ...simulation,
+                ...(version < 4 && eventVoided ? { resultsVoided: true } : {}),
+              },
+            ];
+          }),
         );
 
         return {

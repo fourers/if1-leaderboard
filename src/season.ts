@@ -145,11 +145,15 @@ export function getCurrentResult(
   driver: string,
 ): ScoredResult | undefined {
   const event = events.find(({ event }) => event.RoundNumber === round);
+  if (!event || simulatedOrders[`${year}-${round}-${session}`]?.resultsVoided) {
+    return undefined;
+  }
+
   const original =
     session === "Race"
       ? event?.raceResults.get(driver)
       : event?.sprintResults.get(driver);
-  if (!event || !original) return undefined;
+  if (!original) return undefined;
 
   const order = simulatedOrders[`${year}-${round}-${session}`];
   if (!order) return original;
