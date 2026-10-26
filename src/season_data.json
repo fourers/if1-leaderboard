@@ -8052,6 +8052,167 @@
             "TeamName": "Audi"
           }
         ]
+      },
+      {
+        "EventName": "United States Grand Prix",
+        "RoundNumber": 18,
+        "ShortEventName": "United States",
+        "Race": [
+          {
+            "Abbreviation": "ANT",
+            "GridPosition": 1.0,
+            "Position": 1.0,
+            "Status": "Finished",
+            "TeamName": "Mercedes"
+          },
+          {
+            "Abbreviation": "LEC",
+            "GridPosition": 4.0,
+            "Position": 2.0,
+            "Status": "Finished",
+            "TeamName": "Ferrari"
+          },
+          {
+            "Abbreviation": "VER",
+            "GridPosition": 2.0,
+            "Position": 3.0,
+            "Status": "Finished",
+            "TeamName": "Red Bull"
+          },
+          {
+            "Abbreviation": "HAM",
+            "GridPosition": 5.0,
+            "Position": 4.0,
+            "Status": "Finished",
+            "TeamName": "Ferrari"
+          },
+          {
+            "Abbreviation": "NOR",
+            "GridPosition": 8.0,
+            "Position": 5.0,
+            "Status": "Finished",
+            "TeamName": "McLaren"
+          },
+          {
+            "Abbreviation": "HAD",
+            "GridPosition": 3.0,
+            "Position": 6.0,
+            "Status": "Finished",
+            "TeamName": "Red Bull"
+          },
+          {
+            "Abbreviation": "PIA",
+            "GridPosition": 7.0,
+            "Position": 7.0,
+            "Status": "Finished",
+            "TeamName": "McLaren"
+          },
+          {
+            "Abbreviation": "RUS",
+            "GridPosition": 6.0,
+            "Position": 8.0,
+            "Status": "Finished",
+            "TeamName": "Mercedes"
+          },
+          {
+            "Abbreviation": "LAW",
+            "GridPosition": 9.0,
+            "Position": 9.0,
+            "Status": "Finished",
+            "TeamName": "RB F1 Team"
+          },
+          {
+            "Abbreviation": "GAS",
+            "GridPosition": 10.0,
+            "Position": 10.0,
+            "Status": "Finished",
+            "TeamName": "Alpine F1 Team"
+          },
+          {
+            "Abbreviation": "HUL",
+            "GridPosition": 11.0,
+            "Position": 11.0,
+            "Status": "Finished",
+            "TeamName": "Audi"
+          },
+          {
+            "Abbreviation": "LIN",
+            "GridPosition": 14.0,
+            "Position": 12.0,
+            "Status": "Lapped",
+            "TeamName": "RB F1 Team"
+          },
+          {
+            "Abbreviation": "BOR",
+            "GridPosition": 21.0,
+            "Position": 13.0,
+            "Status": "Lapped",
+            "TeamName": "Audi"
+          },
+          {
+            "Abbreviation": "OCO",
+            "GridPosition": 15.0,
+            "Position": 14.0,
+            "Status": "Lapped",
+            "TeamName": "Haas F1 Team"
+          },
+          {
+            "Abbreviation": "STR",
+            "GridPosition": 22.0,
+            "Position": 15.0,
+            "Status": "Lapped",
+            "TeamName": "Aston Martin"
+          },
+          {
+            "Abbreviation": "ALO",
+            "GridPosition": 12.0,
+            "Position": 16.0,
+            "Status": "Lapped",
+            "TeamName": "Aston Martin"
+          },
+          {
+            "Abbreviation": "ALB",
+            "GridPosition": 17.0,
+            "Position": 17.0,
+            "Status": "Lapped",
+            "TeamName": "Williams"
+          },
+          {
+            "Abbreviation": "SAI",
+            "GridPosition": 16.0,
+            "Position": 18.0,
+            "Status": "Lapped",
+            "TeamName": "Williams"
+          },
+          {
+            "Abbreviation": "PER",
+            "GridPosition": 18.0,
+            "Position": 19.0,
+            "Status": "Lapped",
+            "TeamName": "Cadillac F1 Team"
+          },
+          {
+            "Abbreviation": "BOT",
+            "GridPosition": 19.0,
+            "Position": 20.0,
+            "Status": "Retired",
+            "TeamName": "Cadillac F1 Team"
+          },
+          {
+            "Abbreviation": "COL",
+            "GridPosition": 20.0,
+            "Position": 21.0,
+            "Status": "Retired",
+            "TeamName": "Alpine F1 Team"
+          },
+          {
+            "Abbreviation": "BEA",
+            "GridPosition": 13.0,
+            "Position": 22.0,
+            "Status": "Retired",
+            "TeamName": "Haas F1 Team"
+          }
+        ]
       }
     ]
   }

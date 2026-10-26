@@ -1,9 +1,8 @@
 import datetime
 import json
 
+import click
 import fastf1 as ff1
-
-SEASONS = [2025, 2026]
 
 
 def load_session(season, event_name, event_format):
@@ -44,9 +43,12 @@ def get_season_data(season: int):
     return json_data
 
 
-def main():
+@click.command()
+@click.option("--season", type=str, default="2025,2026")
+def main(season: str):
     json_data = [
-        {"Season": season, "Events": get_season_data(season)} for season in SEASONS
+        {"Season": int(season_value), "Events": get_season_data(int(season_value))}
+        for season_value in season.split(",")
     ]
     print(json.dumps(json_data, indent=2))
 
